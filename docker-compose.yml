@@ -5,13 +5,13 @@ services:
     image: hashtopolis/web-ui:latest
     restart: always
     environment:
-      - HASHTOPOLIS_BACKEND_URL
+      - http://localhost:8080/api/v2
     build:
       context: ..
       dockerfile: Dockerfile
       target: hashtopolis-web-ui-dev
     ports:
-      - "4200:4200"
+      - "5357:4200"
     volumes:
       # This is where VS Code should expect to find your project's source code
       # and the value of "workspaceFolder" in .devcontainer/devcontainer.json
