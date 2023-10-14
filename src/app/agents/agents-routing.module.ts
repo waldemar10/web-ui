@@ -39,7 +39,7 @@ const routes: Routes = [
         },
         canActivate: [IsAuth,CheckPerm]},
       {
-        path: 'show-agents/:id/edit', component: EditAgentComponent,
+        path: 'agent-status/:id/edit', component: EditAgentComponent,
         data: {
             kind: 'edit-agent',
             breadcrumb: 'Edit Agent',

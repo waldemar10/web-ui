@@ -406,8 +406,14 @@
 </div>
 <!-- Agent Activity Table -->
 <app-table>
-  <app-page-subtitle [subtitle]="'Agents activity'"></app-page-subtitle>
-  <table class="table table-striped table-hover table-sm" #agentstatus datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" id="agentstatus">
+  <app-page-title [title]="'Agents activity'" 
+  [buttontitle]="'New Agent'" [buttonlink]="'/agents/new-agent'" [subbutton]="true"></app-page-title>
+  <div class=" d-flex flex-row justify-content-end align-items-center m-2">
+    Task Color
+    <input type="checkbox" class="ms-2" (click)="setTaskColor()">
+  </div>
+  <table class="table table-striped table-hover table-sm table-bordered" #agentstatus datatable  [dtOptions]="dtOptions"
+   [dtTrigger]="dtTrigger"  id="agentstatus">
     <thead class="thead-light">
       <tr>
           <th class="rounded-start">ID</th>
@@ -415,20 +421,39 @@
           <th>Name</th>
           <th>Agent Status</th>
           <th>Currently working on</th>
-          <th>Assigned to</th>
-          <th class="rounded-end">Last Activity</th>
+          <th>
+            <!-- <label class="checkbox-color">
+              Task Color
+              <input type="checkbox"  (click)="setTaskColor($event)">
+            </label> -->
+            Assigned to
+          
+          </th>
+          <th>Last Activity</th>
+          <th>Owner</th>
+          <th>Client</th>
+          <th>GPUs/CPUs</th>
+          <th>+Info</th>
+          <th>Access Group</th>
+          <th class="rounded-end">Actions</th>
       </tr>
       </thead>
-      <tbody>
-        <tr *ngFor="let aa of _filteresAgents | sort:statusOrderBy:statusOrderByName">
-          <td>{{ aa.agentId }}</td>
+      <tbody>       
+        <tr *ngFor="let aa of _filteresAgents; let i = index">
+          
+          <td class="position-relative">
+            {{ aa.agentId }}
+          </td>
+
           <td>
             <app-active-spinner *ngIf="( aa.agentId | aspeed:true | async ) > 0"></app-active-spinner>
           </td>
+
           <td style="white-space: nowrap;">
             <a [routerLink]="['/agents/show-agents',aa.agentId,'edit']">{{ aa.agentName | shortenString:15 | lowercase | titlecase }}</a>
             <span *ngIf="aa.isTrusted === true" ><fa-icon [icon]="faLock" aria-hidden="true" ngbTooltip='Trust agent with secret data'></fa-icon></span>
           </td>
+          <!-- Agent Status -->
           <td>
             <span *ngIf="aa.isActive === true" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: green;">
               Active
@@ -437,6 +462,7 @@
               Inactive
             </span>
           </td>
+          <!-- Currently Working on -->
           <td>
             <div *ngIf="( aa.agentId | aspeed:true | async ) > 0">
               <div *ngIf="aa.taskId">Task:
@@ -448,19 +474,72 @@
               </div>
             </div>
           </td>
-          <td>
+          <!-- Assigned to Task -->
+          <td [ngStyle]="{'background-color': isCheckboxChecked ? aa.color : 'white'}">
             <a *ngIf="aa.taskId">
               <a [routerLink]="['/tasks/show-tasks/',aa.taskId,'edit']"> {{ aa.taskName | shortenString:15 | lowercase | titlecase }}</a>
             </a>
           </td>
+          <!-- Last Activity -->
           <td>
             Action: {{ aa.lastAct }}<br>
             Time: {{ aa.lastTime | uiDate }}<br>
             <div *ngIf="aa.lastIp">IP: <b>{{ aa.lastIp }}</b></div>
           </td>
-        </tr>
+          
+
+          <!-- ** OWNER -->
+          <!-- <td [hidden]="!selectedRowIndices.has(i)">
+            <a *ngIf="showagents[i].userId > 0"><a [routerLink]="['/users/',showagents[i].userId,'edit']">{{ showagents[i].userId}}</a></a>
+          </td> -->
+          <td>
+            <a *ngIf="showagents[i].userId > 0"><a [routerLink]="['/users/',showagents[i].userId,'edit']">{{ showagents[i].userId}}</a></a>
+          </td>
+          <!-- ** CLIENT -->
+          <td >
+            {{showagents[i].agentId}}
+            <a *ngIf="!showagents[i].agentId">---</a>
+            <a *ngIf="showagents[i].clientSignature.length > 0">{{ showagents[i].clientSignature }}</a>
+            <a *ngIf="showagents[i].clientSignature.length === 0">Unknown</a>
+            <span *ngIf="showagents[i].notes" ><fa-icon [icon]="faFileText" aria-hidden="true"></fa-icon>
+                <a style="display: none;">notes</a>
+            </span>
+          </td>
+          <!-- ** GPU/ CPUS -->
+          <td class="pre" >
+            {{ showagents[i].devices }}
+          </td>
+          <!-- ** +INFO -->
+          <td style="white-space: nowrap;" >
+            <fa-icon *ngIf="showagents[i].cmdPars" [icon]="faTerminal" aria-hidden="true" ngbTooltip={{showagents[i].cmdPars}}></fa-icon>
+            <fa-icon *ngIf="showagents[i].cpuOnly" [icon]="faMicrochip" aria-hidden="true" ngbTooltip="CPU Only"></fa-icon>
+          </td>
+        
+         <!--  ** ACCESS GROUP -->
+          <td >
+            <div *ngFor="let group of showagents[i].accessGroups">
+              <a [routerLink]="['/users/access-groups/',group.accessGroupId,'edit']">{{group.groupName}}</a>
+              <hr *ngIf="showagents[i].accessGroups.length > 1">
+            </div>
+          </td>
+          <!--  ** EDIT & DELETE -->
+          <td class="overflow-hidden">
+            <app-button-actions>
+              <button ngbDropdownItem [routerLink]="[aa.agentId,'edit']" data-placement="top" title="Edit">
+                <fa-icon [icon]="faEdit" aria-hidden="true"></fa-icon> Edit
+              </button>
+              <div class="dropdown-divider"></div>
+              <button ngbDropdownItem data-toggle="tooltip" data-placement="top" title="Delete" (click)="onDelete(showagents[i].agentId)">
+                <fa-icon [icon]="faTrash" aria-hidden="true"></fa-icon> Delete
+              </button>
+            </app-button-actions>
+          </td>
+        </tr>   
       </tbody>
   </table>
+
+ 
+
 </app-table>
 <!-- Todo Fix Pagination -->
 <!-- <div class="align-items-right py-4">

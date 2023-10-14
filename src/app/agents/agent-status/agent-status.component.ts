@@ -1,4 +1,5 @@
-import { faDigitalTachograph, faMicrochip, faHomeAlt, faPlus, faUserSecret,faEye, faTemperature0, faInfoCircle, faServer, faUsers, faChevronDown, faLock, faPauseCircle} from '@fortawesome/free-solid-svg-icons';
+import { faDigitalTachograph, faMicrochip, faHomeAlt, faPlus, faUserSecret,faEye, faTemperature0, faInfoCircle,
+   faServer, faUsers, faChevronDown, faLock, faPauseCircle, faTrash, faEdit, faTerminal, faFileText} from '@fortawesome/free-solid-svg-icons';
 import { ModalDismissReasons, NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { DataTableDirective } from 'angular-datatables';
@@ -12,6 +13,8 @@ import { PageTitle } from 'src/app/core/_decorators/autotitle';
 import { ASC } from '../../core/_constants/agentsc.config';
 import { environment } from 'src/environments/environment';
 import { SERV } from '../../core/_services/main.config';
+
+import Swal from 'sweetalert2/dist/sweetalert2.js';
 
 @Component({
   selector: 'app-agent-status',
@@ -35,12 +38,17 @@ export class AgentStatusComponent implements OnInit {
   faLock=faLock;
   faEye=faEye;
 
+  faTrash=faTrash;
+  faEdit=faEdit;
+  faTerminal=faTerminal;
+  faFileText=faFileText;
   public statusOrderByName = environment.config.agents.statusOrderByName;
   public statusOrderBy = environment.config.agents.statusOrderBy;
 
   showagents: any[] = [];
   _filteresAgents: any[] = [];
   filterText = '';
+  isCheckboxChecked = false;
 
   totalRecords = 0;
   pageSize = 20;
@@ -94,14 +102,15 @@ export class AgentStatusComponent implements OnInit {
     const self = this;
     this.dtOptions = {
       dom: 'Bfrtip',
-      scrollY: true,
+      bAutoWidth: true,
+      fixedHeader : false,
+      autoWidth: false,
       bDestroy: true,
-      columnDefs: [
-        {
-            targets: 0,
-            className: 'noVis'
-        }
+      lengthMenu: [
+        [10, 25, 50, -1],
+        ['10 rows', '25 rows', '50 rows', 'Show all rows']
       ],
+      pageLength: -1, 
       order: [[0, 'desc']],
       bStateSave:true,
       select: {
@@ -162,14 +171,18 @@ export class AgentStatusComponent implements OnInit {
             {
               extend: 'colvis',
               text: 'Column View',
-              columns: [ 1,2,3,4 ],
+              columns: [ 1,2,3,4,5,6,7,8,9,10,11,12 ],
+              
             },
             {
-              extend: "pageLength",
-              className: "btn-sm"
+              extend: 'pageLength',
+              className: 'btn-sm',
+              titleAttr: 'Show number of rows',
             },
           ],
         }
+        
+        
       }
   }
 
@@ -202,22 +215,26 @@ export class AgentStatusComponent implements OnInit {
           this.gs.getAll(SERV.CHUNKS,params).subscribe((c: any)=>{
 
             const getAData = a.values.map(mainObject => {
+              
               const matchObjectTask = assign.values.find(e => e.agentId === mainObject.agentId)
+              
               return { ...mainObject, ...matchObjectTask}
             })
             this.totalRecords = a.total;
             const jointasks = getAData.map(mainObject => {
               const matchObjectTask = t.values.find(e => e.taskId === mainObject.taskId)
+              /* console.log("A " +JSON.stringify(t.values));
+              console.log("COLOROOR: "+t.values[0].color) */
               return { ...mainObject, ...matchObjectTask}
             })
 
 
             this.showagents = this.filteredAgents = jointasks.map(mainObject => {
             const matchObjectAgents = c.values.find(e => e.agentId === mainObject.agentId)
+            
             return { ...mainObject, ...matchObjectAgents}
             })
 
-            console.log(this.showagents);
             this.dtTrigger.next(void 0);
         })
       })
@@ -257,8 +274,11 @@ export class AgentStatusComponent implements OnInit {
         data = data.toUpperCase();
         const props = ['agentName', 'agentId'];
         this._filteresAgents = this.filterService.filter<any>(this.showagents, data, props);
-    } else {
+        
+      
+      } else {
       this._filteresAgents = this.showagents;
+    
     }
   }
 
@@ -305,6 +325,51 @@ export class AgentStatusComponent implements OnInit {
   openEnd(content: TemplateRef<any>) {
 		this.offcanvasService.open(content, { position: 'end' });
 	}
+  
+onDelete(id: number){
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: 'btn',
+          cancelButton: 'btn'
+        },
+        buttonsStyling: false
+      })
+      Swal.fire({
+        title: "Are you sure?",
+        text: "Once deleted, it can not be recovered!",
+        icon: "warning",
+        reverseButtons: true,
+        showCancelButton: true,
+        cancelButtonColor: '#8A8584',
+        confirmButtonColor: '#C53819',
+        confirmButtonText: 'Yes, delete it!'
+      })
+      .then((result) => {
+        if (result.isConfirmed) {
+          this.gs.delete(SERV.AGENTS,id).subscribe(() => {
+            Swal.fire({
+              title: "Success",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 1500
+            });
+            this.ngOnInit();
+            this.rerender();  // rerender datatables
+          });
+        } else {
+          swalWithBootstrapButtons.fire({
+            title: "Cancelled",
+            text: "Your Agent is safe!",
+            icon: "error",
+            showConfirmButton: false,
+            timer: 1500
+          })
+        }
+      });
+  }
 
-
+  setTaskColor() {
+    /* event.stopPropagation(); */
+    this.isCheckboxChecked = !this.isCheckboxChecked;
+  }
 }
