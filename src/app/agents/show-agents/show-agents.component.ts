@@ -51,7 +51,7 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   constructor(
     private uiService: UIConfigService,
     private gs: GlobalService,
-  ) { }
+  ) {}
 
   ngOnInit(): void {
 
@@ -68,6 +68,12 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       dom: 'Bfrtip',
       stateSave: true,
       destroy: true,
+      lengthMenu: [
+        [10, 25, 50, -1],
+        ['10 rows', '25 rows', '50 rows', 'Show all rows']
+      ],
+      pageLength: -1, 
+      order: [[0, 'desc']],
       select: {
         style: 'multi',
         },
