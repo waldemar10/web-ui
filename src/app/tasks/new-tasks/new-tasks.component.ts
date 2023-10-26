@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy ,ChangeDetectorRef, HostListener, ViewChild  } from '@angular/core';
+import { Component, OnInit, ElementRef, ChangeDetectionStrategy ,ChangeDetectorRef, HostListener, ViewChild  } from '@angular/core';
 import { faHomeAlt, faPlus, faTrash, faInfoCircle, faLock } from '@fortawesome/free-solid-svg-icons';
 import { AbstractControl, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ModalDismissReasons, NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -53,6 +53,10 @@ export class NewTasksComponent implements OnInit {
   crackertype: any;  // ToDo change to interface
   crackerversions: any = [];
   createForm: FormGroup;
+
+  showAgentsDataForTable: any = [];
+  selectedData: Set<any> = new Set();
+  agentIds: any;
 
   // ToDo change to interface
   public allfiles: {
@@ -189,8 +193,22 @@ export class NewTasksComponent implements OnInit {
   // Tooltips
   tasktip: any =[]
 
+  updateSelectedData(selectedData: any[]) {
+    this.selectedData = new Set(selectedData);
+    this._changeDetectorRef.detectChanges();
+    this.agentIds = selectedData.map(item => parseInt(item.split('-')[0]));
+  }
+  getSelectedDataArray(): any[] {
+    return Array.from(this.selectedData);
+  }
+  isRowHighlighted(rowId: string, rowName: string): string {
+    const uniqueKey = `${rowId}-${rowName.toUpperCase()}`;
+    const dataArray = Array.from(this.selectedData);
+    return dataArray.includes(uniqueKey) ? 'highlighted-row' : '';
+  }
   ngOnInit(): void {
-
+    this.getAgentsData();
+    this.fetchData(); 
     this.route.params
     .subscribe(
       (params: Params) => {
@@ -223,24 +241,53 @@ export class NewTasksComponent implements OnInit {
       }
     });
 
-   this.fetchData();
-
-    this.dtOptions = {
-      dom: 'Bfrtip',
-      scrollY: "700px",
-      scrollCollapse: true,
-      paging: false,
-      autoWidth: false,
-      buttons: {
-          dom: {
-            button: {
-              className: 'dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt',
-            }
-          },
-      buttons:[]
-      }
+  this.dtOptions = {
+    dom: 'Bfrtip',
+    scrollY: "700px",
+    scrollCollapse: true,
+    select:true,
+    autoWidth: false,
+      lengthMenu: [
+        [10, 25, 50, -1],
+        ['10 rows', '25 rows', '50 rows', 'Show all rows']
+      ],
+    pageLength: 10,
+    buttons: {
+      dom: {
+        button: {
+          className: 'dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt',
+        }
+      },
+      buttons: [
+        {
+          text: 'Add/Remove selected agents',
+          action: (e, dt, button, config) => {
+            const selectedRows = dt.rows({ selected: true }).data().toArray();
+      
+            selectedRows.forEach(row => {
+              const rowId = row[0];
+              const rowName = row[1].toUpperCase();
+              const uniqueKey = `${rowId}-${rowName}`;
+              
+              if (this.selectedData.has(uniqueKey)) {
+              
+                this.selectedData.delete(uniqueKey);
+              } else {
+                
+                this.selectedData.add(uniqueKey);
+              }
+            });
+            this.updateSelectedData(Array.from(this.selectedData));
+          }
+        },
+        {
+          extend: 'pageLength',
+          className: 'btn-sm',
+          titleAttr: 'Show number of rows',
+        }
+      ]
     }
-
+  }
     this.createForm = new FormGroup({
       'taskName': new FormControl('', [Validators.required]),
       'notes': new FormControl(''),
@@ -285,6 +332,29 @@ export class NewTasksComponent implements OnInit {
     this.uiService.getUIsettings('blacklistChars').value
   }
 
+  getAgentsData() {
+    const paramsAgent = {'maxResults': this.maxResults, 'expand':'accessGroups'}
+    const params = {'maxResults': this.maxResults};
+    this.gs.getAll(SERV.AGENTS,paramsAgent).subscribe((agents: any) => {
+      this.gs.getAll(SERV.AGENT_ASSIGN,params).subscribe((agent_assign: any) => {
+        this.gs.getAll(SERV.TASKS,params).subscribe((tasks: any)=>{
+
+            const agentsData = agents.values.map(agent => {
+              const matchAgentWithAssignedAgent = agent_assign.values.find(assignedAgents => assignedAgents.agentId === agent.agentId)
+              return { ...agent, ...matchAgentWithAssignedAgent}
+            })
+            
+            this.showAgentsDataForTable = agentsData.map(mainObject => {
+              const matchTaskWithAssignedAgent = tasks.values.find(e => e.taskId === mainObject.taskId)
+              return { ...mainObject, ...matchTaskWithAssignedAgent}
+            })
+            
+            this.dtTrigger.next(void 0);
+            
+      })
+    });
+  });
+  }
   async fetchData() {
 
     await this.gs.getAll(SERV.CRACKERS_TYPES).subscribe((crackers) => {
@@ -401,8 +471,9 @@ export class NewTasksComponent implements OnInit {
   }
 
   onSubmit(){
-    if (this.createForm.valid) {
-      this.gs.create(SERV.TASKS,this.createForm.value).subscribe(() => {
+    if (this.createForm.valid) {     
+      this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
+        const taskId = response.taskId; //Get the current task id
           Swal.fire({
             title: "Success",
             text: "New Task created!",
@@ -410,13 +481,34 @@ export class NewTasksComponent implements OnInit {
             showConfirmButton: false,
             timer: 1500
           });
-          this.createForm.reset();
-          this.router.navigate(['tasks/show-tasks']);
+          this.assignAgents(taskId);   
         }
       );
     }
   }
 
+  assignAgents(taskId: number){
+
+  if (Array.isArray(this.agentIds)) {  
+    this.agentIds.forEach(agentId => {
+    const payload = {"taskId":taskId,"agentId":agentId};
+    this.gs.create(SERV.AGENT_ASSIGN,payload).subscribe(() => {
+        Swal.fire({
+          title: "Success",
+          text: "Agent Assigned!",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        this.router.navigate(['tasks/show-tasks']);
+    });
+  });
+  }else{
+    const payload = {"taskId":taskId,"agentId":this.agentIds};
+    this.gs.create(SERV.AGENT_ASSIGN,payload);
+    this.router.navigate(['tasks/show-tasks']);
+      }
+  }
   // Copied from Task
   private initFormt() {
     if (this.copyMode) {
