@@ -15,9 +15,20 @@
           <th>Access Group</th>
           <th class="rounded-end">Actions</th>
       </tr>
+      <tr>
+        <th>
+          <input type="text" [(ngModel)]="nameInput" placeholder="Search agent Name" (input)="filterByAgentName()" />
+        </th>
+        <th>
+          <input type="text" [(ngModel)]="ownerInput" placeholder="Search owner" (input)="filterByOwner()" />
+        </th>
+        <th colspan="10">
+          <input type="text" [(ngModel)]="hardwareInput" placeholder="Search CPU / GPU" (input)="filterByHardware()" />
+        </th>
+      </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let agent of showagents">
+      <tr *ngFor="let agent of filteredAgents">
           <!-- <td><input type="checkbox" [disabled]="agent.agentId === 1" class="checkboxCls" [value]="agent.agentId" [checked]="agent.checked" name="id" (change)="agent.checked = !agent.checked"></td> -->
           <td>{{ agent.agentId }}</td>
           <td>

@@ -39,6 +39,14 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   dtOptions: any = {};
   isChecked =false;
 
+  isFilterOpen: boolean = false;
+  filteredAgents: any[] = [];
+  
+  //filter values
+  nameInput: string = "";
+  ownerInput: string = "";
+  hardwareInput: string = "";
+
   ngOnDestroy(): void {
     this.dtTrigger.unsubscribe();
   }
@@ -59,6 +67,7 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
 
     this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
       this.showagents = agents.values;
+      this.filteredAgents = agents.values;
       // this.showagents.forEach(f => (f.checked = false));
       this.dtTrigger.next(void 0);
     });
@@ -95,6 +104,13 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
           autoClose: true,
           action: function (e, dt, node, config) {
             self.onRefresh();
+          }
+        },
+        {
+          text: 'Filter',
+          autoClose: true,
+          action: function (e, dt, node, config) {
+            self.toggleFilter();
           }
         },
         {
@@ -193,6 +209,29 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   onRefresh(){
     this.rerender();
     this.ngOnInit();
+  }
+
+  toggleFilter(){
+    this.isFilterOpen != this.isFilterOpen;
+  }
+
+  filterByAgentName(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      return agent.agentName.toLowerCase().includes(this.nameInput.toLowerCase());
+    })
+  }
+
+  //TODO: Change Owner to display UserName instead of an Id
+  filterByOwner(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      return agent.userId.toString().toLowerCase().includes(this.ownerInput.toLowerCase());
+    })
+  }
+
+  filterByHardware(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      return agent.devices.toLowerCase().includes(this.hardwareInput.toLowerCase());
+    })
   }
 
   setCheckAll(){
