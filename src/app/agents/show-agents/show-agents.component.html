@@ -3,6 +3,36 @@
 <app-table>
   <table class="table table-striped table-hover table-sm" #agents datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" id="agents">
     <thead class="thead-light">
+      <tr [hidden]="!isFilterOpen">
+        <th class="rounded-start">
+          
+        </th>
+        <th>
+          <select [(ngModel)]="statusInput" (change)="filterByStatus()">
+            <option>Active</option>
+            <option>Inactive</option>
+          </select>
+        </th>
+        <th>
+          <input type="text" [(ngModel)]="nameInput" placeholder="Search agent Name" (input)="filterByAgentName()" />
+        </th>
+        <th>
+          <input type="text" [(ngModel)]="ownerInput" placeholder="Search owner" (input)="filterByOwner()" />
+        </th>
+        <th></th>
+        <th>
+          <input type="text" [(ngModel)]="hardwareInput" placeholder="Search CPU / GPU" (input)="filterByHardware()" />
+        </th>
+        <th></th>
+        <th></th>
+        <th>
+          <select [(ngModel)]="accessGroupInput" (change)="filterByAccessGroup()">
+            <option>Select Access Group</option>
+            <option *ngFor="let group of agroups">{{group.groupName}}</option>
+          </select>
+        </th>   
+        <th class="rounded-end"></th>
+      </tr>  
       <tr>
           <th class="rounded-start"><input type="checkbox" (click)="setCheckAll()"> ID</th>
           <th>Status</th>
@@ -14,17 +44,6 @@
           <th>Last activity</th>
           <th>Access Group</th>
           <th class="rounded-end">Actions</th>
-      </tr>
-      <tr>
-        <th>
-          <input type="text" [(ngModel)]="nameInput" placeholder="Search agent Name" (input)="filterByAgentName()" />
-        </th>
-        <th>
-          <input type="text" [(ngModel)]="ownerInput" placeholder="Search owner" (input)="filterByOwner()" />
-        </th>
-        <th colspan="10">
-          <input type="text" [(ngModel)]="hardwareInput" placeholder="Search CPU / GPU" (input)="filterByHardware()" />
-        </th>
       </tr>
       </thead>
       <tbody>

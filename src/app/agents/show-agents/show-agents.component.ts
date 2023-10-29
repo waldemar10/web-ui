@@ -46,6 +46,10 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   nameInput: string = "";
   ownerInput: string = "";
   hardwareInput: string = "";
+  statusInput: string = ""
+  accessGroupInput: string = "";
+
+  public agroups: {accessGroupId: number, groupName: string, isEdit: false }[] = [];
 
   ngOnDestroy(): void {
     this.dtTrigger.unsubscribe();
@@ -63,12 +67,18 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
 
-    const params = {'maxResults': this.maxResults, 'expand':'accessGroups'}
+    const agentParams = {'maxResults': this.maxResults, 'expand':'accessGroups'}
+    const aGroupParams = {'maxResults': this.maxResults}
 
-    this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
+    this.gs.getAll(SERV.AGENTS,agentParams).subscribe((agents: any) => {
       this.showagents = agents.values;
       this.filteredAgents = agents.values;
       // this.showagents.forEach(f => (f.checked = false));
+      this.dtTrigger.next(void 0);
+    });
+
+    this.gs.getAll(SERV.ACCESS_GROUPS,aGroupParams).subscribe((agroups: any) => {
+      this.agroups = agroups.values;
       this.dtTrigger.next(void 0);
     });
 
@@ -212,7 +222,7 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   }
 
   toggleFilter(){
-    this.isFilterOpen != this.isFilterOpen;
+    this.isFilterOpen = !this.isFilterOpen;
   }
 
   filterByAgentName(){
@@ -231,6 +241,23 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   filterByHardware(){
     this.filteredAgents = this.showagents.filter((agent) => {
       return agent.devices.toLowerCase().includes(this.hardwareInput.toLowerCase());
+    })
+  }
+
+  filterByStatus(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      if(this.statusInput === "Active" && agent.isActive)
+        return true;
+      else if(this.statusInput === "Inactive" && !agent.isActive)
+        return true;
+      else
+        return false;
+    })
+  }
+
+  filterByAccessGroup(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      return this.accessGroupInput === agent.accessGroups[0].groupName;
     })
   }
 
