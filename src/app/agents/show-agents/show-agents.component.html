@@ -4,13 +4,11 @@
   <table class="table table-striped table-hover table-sm" #agents datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" id="agents">
     <thead class="thead-light">
       <tr [hidden]="!isFilterOpen">
-        <th class="rounded-start">
-          
-        </th>
+        <th class="rounded-start"></th>
         <th>
-          <select [(ngModel)]="statusInput" (change)="filterByStatus()">
-            <option>Active</option>
-            <option>Inactive</option>
+          <select [ngStyle]="{height:'27px'}" [(ngModel)]="statusInput" (change)="filterByStatus()">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
           </select>
         </th>
         <th>
@@ -26,7 +24,7 @@
         <th></th>
         <th></th>
         <th>
-          <select [(ngModel)]="accessGroupInput" (change)="filterByAccessGroup()">
+          <select [ngStyle]="{height:'27px'}" [(ngModel)]="accessGroupInput" (change)="filterByAccessGroup()">
             <option>Select Access Group</option>
             <option *ngFor="let group of agroups">{{group.groupName}}</option>
           </select>
