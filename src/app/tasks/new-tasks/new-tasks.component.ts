@@ -43,6 +43,7 @@ export class NewTasksComponent implements OnInit {
 
   dtTrigger: Subject<any> = new Subject<any>();
   dtOptions: any = {};
+  dtOptionsAgent: any = {};
 
   copyMode = false;
   copyFiles: any;
@@ -53,6 +54,10 @@ export class NewTasksComponent implements OnInit {
   crackertype: any;  // ToDo change to interface
   crackerversions: any = [];
   createForm: FormGroup;
+
+  showAgentsDataForTable: any = [];
+  selectedData: Set<any> = new Set();
+  agentIds: any;
 
   // ToDo change to interface
   public allfiles: {
@@ -183,6 +188,19 @@ export class NewTasksComponent implements OnInit {
     return this.uiService.getUIsettings('blacklistChars').value;
   }
 
+  updateSelectedData(selectedData: any[]) {
+    this.selectedData = new Set(selectedData);
+    this._changeDetectorRef.detectChanges();
+    this.agentIds = selectedData.map(item => parseInt(item.split('-')[0]));
+  }
+  getSelectedDataArray(): any[] {
+    return Array.from(this.selectedData);
+  }
+  isRowHighlighted(rowId: string, rowName: string): string {
+    const uniqueKey = `${rowId}-${rowName.toUpperCase()}`;
+    const dataArray = this.getSelectedDataArray();
+    return dataArray.includes(uniqueKey) ? 'highlighted-row' : '';
+  }
   // Tooltips
   tasktip: any =[]
 
@@ -221,7 +239,7 @@ export class NewTasksComponent implements OnInit {
     });
 
    this.fetchData();
-
+   this.getAgentsData();
     this.dtOptions = {
       dom: 'Bfrtip',
       scrollX: true,
@@ -241,6 +259,54 @@ export class NewTasksComponent implements OnInit {
             }
           },
       buttons:[]
+      }
+    }
+    this.dtOptionsAgent = {
+      dom: 'Bfrtip',
+      scrollX: true,
+      pageLength: 25,
+      lengthMenu: [
+          [10, 25, 50, 100, 250, -1],
+          [10, 25, 50, 100, 250, 'All']
+      ],
+      scrollY: "700px",
+      scrollCollapse: true,
+      paging: false,
+      autoWidth: false,
+      select:true,
+      buttons: {
+          dom: {
+            button: {
+              className: 'dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt',
+            }
+          },
+          buttons: [
+            {
+              text: 'Add/Remove selected agents',
+              action: (e, dt, button, config) => {
+                const selectedRows = dt.rows({ selected: true }).data().toArray(); //Get data from selected rows
+          
+                selectedRows.forEach(row => {
+                  const rowId = row[0];
+                  const rowName = row[1].toUpperCase();
+                  const uniqueKey = `${rowId}-${rowName}`; //Create unique key
+                  
+                  if (this.selectedData.has(uniqueKey)) {
+                    this.selectedData.delete(uniqueKey);
+                  } else {
+                    this.selectedData.add(uniqueKey);
+                  }
+                });
+
+                this.updateSelectedData(Array.from(this.selectedData)); 
+              }
+            },
+            {
+              extend: 'pageLength',
+              className: 'btn-sm',
+              titleAttr: 'Show number of rows',
+            }
+          ]
       }
     }
 
@@ -288,6 +354,29 @@ export class NewTasksComponent implements OnInit {
     this.uiService.getUIsettings('blacklistChars').value
   }
 
+  getAgentsData() {
+    const paramsAgent = {'maxResults': this.maxResults, 'expand':'accessGroups'}
+    const params = {'maxResults': this.maxResults};
+    this.gs.getAll(SERV.AGENTS,paramsAgent).subscribe((agents: any) => {
+      this.gs.getAll(SERV.AGENT_ASSIGN,params).subscribe((agent_assign: any) => {
+        this.gs.getAll(SERV.TASKS,params).subscribe((tasks: any)=>{
+
+            const agentsData = agents.values.map(agent => {
+              const matchAgentWithAssignedAgent = agent_assign.values.find(assignedAgents => assignedAgents.agentId === agent.agentId)
+              return { ...agent, ...matchAgentWithAssignedAgent}
+            })
+            
+            this.showAgentsDataForTable = agentsData.map(mainObject => {
+              const matchTaskWithAssignedAgent = tasks.values.find(e => e.taskId === mainObject.taskId)
+              return { ...mainObject, ...matchTaskWithAssignedAgent}
+            })
+            
+            this.dtTrigger.next(void 0);
+            
+      })
+    });
+  });
+  }
   async fetchData() {
 
     await this.gs.getAll(SERV.CRACKERS_TYPES).subscribe((crackers) => {
@@ -431,15 +520,30 @@ export class NewTasksComponent implements OnInit {
 
   onSubmit(){
     if (this.createForm.valid) {
-      this.gs.create(SERV.TASKS,this.createForm.value).subscribe(() => {
+      this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
+        const taskId = response.taskId; // get current task id
         this.alert.okAlert('New Task created!','');
         this.createForm.reset();
+        this.assignAgents(taskId); 
         this.router.navigate(['tasks/show-tasks']);
         }
       );
     }
   }
-
+  assignAgents(taskId: number){
+  if (Array.isArray(this.agentIds)) {  
+    this.agentIds.forEach(agentId => {
+    const payload = {"taskId":taskId,"agentId":agentId};
+    this.gs.create(SERV.AGENT_ASSIGN,payload).subscribe(() => {
+      if(this.agentIds.length > 1){
+        this.alert.okAlert('New Task created! & Agents assigned!','');
+      }else{
+        this.alert.okAlert('New Task created! & Agent assigned!','');
+      } 
+     });
+    });
+   }
+  }
   // Copied from Task
   private initFormt() {
     if (this.copyMode) {
