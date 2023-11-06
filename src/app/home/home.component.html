@@ -1,5 +1,6 @@
 <!-- Body -->
 <main>
+  <!--
   <div class="row">
     <div class="col-lg-3 col-md-6 col-sm-6">
       <div class="card card-dash" [routerLink]="['/agents/show-agents']">
@@ -198,7 +199,21 @@
         </div>
       </div>
     </div>
-
+    -->
+   <!-- <div cdkDropList (cdkDropListDropped)="drop($event)">   cdkDrag-->
+      <mat-grid-list cols="3" rowHeight="200px" gutterSize="10">
+        <mat-grid-tile>
+          <app-pie-chart
+            [availableAgents]="availableAgents"
+            [unavailableAgents]="unavailableAgents"
+            [workingAgents]="workingAgents">
+          </app-pie-chart>
+        </mat-grid-tile>
+        <mat-grid-tile *ngFor="let tile of tiles" cdkDrag>
+          {{ tile }}
+        </mat-grid-tile>
+      </mat-grid-list>
+    <!-- </div> -->
 </main>
 
 <!-- Refresh Button -->

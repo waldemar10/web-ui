@@ -13,12 +13,39 @@ import { PageTitle } from 'src/app/core/_decorators/autotitle';
 import { SERV } from '../core/_services/main.config';
 import { CookieService } from '../core/_services/shared/cookies.service';
 
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+
 @Component({
   selector: 'app-home',
-  templateUrl: './home.component.html'
+  templateUrl: './home.component.html',
+  styles: [
+    `
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(3, 425px);
+        grid-gap: 10px;
+      }
+
+      .grid-item {
+        background-color: #ececec;
+        padding: 10px;
+        text-align: center;
+        border: 1px solid #ccc;
+        width: 425px;
+      }
+    `,
+  ]
 })
 @PageTitle(['Dashboard'])
 export class HomeComponent implements OnInit {
+
+  tiles = ['Tile 1', 'Tile 2', 'Tile 3', 'Tile 4', 'Tile 5', 'Tile 6', 'Tile 7', 'Tile 8', 'Tile 9'];
+
+  drop(event: CdkDragDrop<string[]>) {
+    
+    console.log(event)
+    moveItemInArray(this.tiles, event.previousIndex, event.currentIndex);
+  }
 
   username = 'Admin';
 
@@ -40,8 +67,9 @@ export class HomeComponent implements OnInit {
   }
 
   // Dashboard variables
-  activeAgents = 0;
-  totalAgents = 0;
+  availableAgents = 0;
+  unavailableAgents = 0;
+  workingAgents = 0;
   totalTasks = 0;
   totalCracks = 0;
   allsupertasks = 0;
@@ -57,7 +85,7 @@ export class HomeComponent implements OnInit {
     private cs: CookieService
   ) { }
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
 
     this.initData();
     this.storedAutorefresh = this.getAutoreload();
@@ -90,14 +118,15 @@ export class HomeComponent implements OnInit {
     return JSON.parse(this.cs.getCookie('autorefresh'));
   }
 
-  async initData() {
+  initData() {
 
     // Agents
     const params = {'maxResults': this.maxResults}
 
     this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
-      this.totalAgents = agents.total | 0;
-      this.activeAgents = agents.values.filter(u=> u.isActive == true).length | 0;
+      this.workingAgents = agents.values.length;
+      this.availableAgents = agents.values.filter(u=> u.isActive == true).length | 0;
+      this.unavailableAgents = agents.values.filter(u=> u.isActive == false).length | 0;
     });
 
     //  Tasks
