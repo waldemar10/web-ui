@@ -13,11 +13,13 @@ import { PipesModule } from "../shared/pipes.module";
 import { HomeComponent } from "./home.component";
 import { HomeRoutingModule } from "./home-routing.module";
 import { PieChartComponent } from './dashboard/pie-chart/pie-chart.component';
+import { ProgressBarComponent } from './dashboard/progress-bar/progress-bar.component';
 
 @NgModule({
   declarations:[
     HomeComponent,
-    PieChartComponent
+    PieChartComponent,
+    ProgressBarComponent,
   ],
   imports:[
     ReactiveFormsModule,

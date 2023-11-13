@@ -133,6 +133,7 @@ export class HomeComponent implements OnInit {
     const paramst = {'maxResults': this.maxResults, 'filter': 'isArchived=false'}
 
     this.gs.getAll(SERV.TASKS,paramst).subscribe((tasks: any) => {
+      console.log(tasks)
       this.totalTasks = tasks.values.filter(u=> u.isArchived != true).length | 0;
     });
 
@@ -143,14 +144,15 @@ export class HomeComponent implements OnInit {
 
     // Cracks
     // let paramsc = {'maxResults': this.maxResults, 'filter': 'isCracked='+true+''}
-    const paramsc = {'maxResults': this.maxResults }
+    const paramsc = {'maxResults': this.maxResults, 'expand': 'hashType,accessGroup', 'filter': 'isArchived='+false+''}
 
-    this.gs.getAll(SERV.HASHES,paramsc).subscribe((hashes: any) => {
-      let lastseven:any = new Date() ;
+    this.gs.getAll(SERV.HASHLISTS,paramsc).subscribe((hashes: any) => {
+      console.log(hashes)
+     /* let lastseven:any = new Date() ;
       lastseven = lastseven.setDate(lastseven.getDate() - 7).valueOf()/1000;
       const lastsevenObject = hashes.values.filter(u=> (u.isCracked == true && u.timeCracked > lastseven ));
       this.totalCracks = lastsevenObject.length | 0;
-      this.initCrackCard(hashes.values);
+      this.initCrackCard(hashes.values); */
     });
 
   }
