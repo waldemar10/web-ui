@@ -47,3 +47,4 @@ git-version.json
 # Config file
 config.json
 .devcontainer/.env
+.vscode/settings.json
