@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import * as echarts from 'echarts';
 
 @Component({
@@ -8,24 +8,46 @@ import * as echarts from 'echarts';
 })
 export class ProgressBarComponent implements OnInit {
 
-  @Input() chartTitle: string;
-  @Input() tasks: any[];
+  @Input() hashes: any[];
+
+  data: any = [
+    { name: "hash1", cracked: 3, hashes: 32 },
+    { name: "hash2", cracked: 10, hashes: 20 },
+    { name: "hash3", cracked: 30, hashes: 35 },
+    { name: "hash3", cracked: 25, hashes: 35 },
+  ]
 
   chart: any;
 
+  getTopXHashes(arr: any[], x: any) {
+    arr.forEach((hash) => {
+      hash.progress = Math.floor((hash.cracked / hash.hashes) * 100)
+    });
+
+    const sortedArray = arr.sort((a, b) => b.progress - a.progress);
+
+    const topHashes = sortedArray.slice(0, Math.min(sortedArray.length, x));
+    console.log(topHashes);
+    return topHashes;
+  }
+
+  testData = this.getTopXHashes(this.data, 3);
+
   ngOnInit() {
-    this.chart = echarts.init(document.getElementById('progress-bar-tasks'));
+    this.chart = echarts.init(document.getElementById('progress-bar'));
     this.chart.setOption({
       title: {
-        text: this.chartTitle,
+        text: 'Hashlist Progress',
         x: 'center'
       },
       yAxis: {
         type: 'category',
-        data: ['Task 3',  'Task 2', 'Task 1']
+        data: this.testData.map((hash) => hash.name)
       },
       xAxis: {
         type: 'value',
+        min: 0,
+        max: 100,
         axisLabel: {
           formatter: '{value}%'
         }
@@ -35,11 +57,7 @@ export class ProgressBarComponent implements OnInit {
       },
       series: [
         {
-          data: [
-            {value: 10, itemStyle:{color: 'red'}},
-            {value: 40, itemStyle:{color: 'blue'}},
-            {value: 100, itemStyle:{color: 'green'}},
-          ],
+          data: this.testData.map((hash) => hash.progress),
           type: 'bar',
           showBackground: true,
           backgroundStyle: {
@@ -52,5 +70,5 @@ export class ProgressBarComponent implements OnInit {
       },
     });
   }
-  
+
 }

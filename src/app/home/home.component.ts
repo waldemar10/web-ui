@@ -63,6 +63,7 @@ export class HomeComponent implements OnInit {
   faGithub=faGithub;
 
   getUsername(){
+    console.log(this)
     return this.username;
   }
 
@@ -73,6 +74,7 @@ export class HomeComponent implements OnInit {
   totalTasks = 0;
   totalCracks = 0;
   allsupertasks = 0;
+  allHashes;
 
   private maxResults = environment.config.prodApiMaxResults;
   storedAutorefresh: any =[]
@@ -142,17 +144,22 @@ export class HomeComponent implements OnInit {
       this.allsupertasks = stasks.total | 0;
     });
 
-    // Cracks
-    // let paramsc = {'maxResults': this.maxResults, 'filter': 'isCracked='+true+''}
-    const paramsc = {'maxResults': this.maxResults, 'expand': 'hashType,accessGroup', 'filter': 'isArchived='+false+''}
+    // Hashlists
+    const paramsHashes = {'maxResults': this.maxResults, 'expand': 'hashType,accessGroup', 'filter': 'isArchived='+false+''}
 
-    this.gs.getAll(SERV.HASHLISTS,paramsc).subscribe((hashes: any) => {
-      console.log(hashes)
-     /* let lastseven:any = new Date() ;
+    this.gs.getAll(SERV.HASHLISTS, paramsHashes).subscribe((hashes: any) => {
+      this.allHashes = hashes.values;
+    })
+    	
+    // Cracks
+    let paramsCracked = {'maxResults': this.maxResults, 'filter': 'isCracked='+true+''}
+
+    this.gs.getAll(SERV.HASHLISTS,paramsCracked).subscribe((hashes: any) => {
+      let lastseven:any = new Date() ;
       lastseven = lastseven.setDate(lastseven.getDate() - 7).valueOf()/1000;
       const lastsevenObject = hashes.values.filter(u=> (u.isCracked == true && u.timeCracked > lastseven ));
       this.totalCracks = lastsevenObject.length | 0;
-      this.initCrackCard(hashes.values); */
+      this.initCrackCard(hashes.values);
     });
 
   }

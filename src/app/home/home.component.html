@@ -211,7 +211,7 @@
         </mat-grid-tile>
         <mat-grid-tile>
           <app-progress-bar>
-
+            [hashes]="allHashes"
           </app-progress-bar>
         </mat-grid-tile>
         <mat-grid-tile *ngFor="let tile of tiles" cdkDrag>
