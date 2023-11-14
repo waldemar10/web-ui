@@ -63,7 +63,6 @@ export class HomeComponent implements OnInit {
   faGithub=faGithub;
 
   getUsername(){
-    console.log(this)
     return this.username;
   }
 
@@ -92,7 +91,6 @@ export class HomeComponent implements OnInit {
     this.initData();
     this.storedAutorefresh = this.getAutoreload();
     this.onAutorefresh();
-
   }
 
   onAutorefresh(){
@@ -135,7 +133,6 @@ export class HomeComponent implements OnInit {
     const paramst = {'maxResults': this.maxResults, 'filter': 'isArchived=false'}
 
     this.gs.getAll(SERV.TASKS,paramst).subscribe((tasks: any) => {
-      console.log(tasks)
       this.totalTasks = tasks.values.filter(u=> u.isArchived != true).length | 0;
     });
 
@@ -152,7 +149,7 @@ export class HomeComponent implements OnInit {
     })
     	
     // Cracks
-    let paramsCracked = {'maxResults': this.maxResults, 'filter': 'isCracked='+true+''}
+    const paramsCracked = {'maxResults': this.maxResults }
 
     this.gs.getAll(SERV.HASHLISTS,paramsCracked).subscribe((hashes: any) => {
       let lastseven:any = new Date() ;

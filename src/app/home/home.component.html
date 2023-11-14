@@ -1,6 +1,5 @@
 <!-- Body -->
 <main>
-  <!--
   <div class="row">
     <div class="col-lg-3 col-md-6 col-sm-6">
       <div class="card card-dash" [routerLink]="['/agents/show-agents']">
@@ -22,7 +21,7 @@
             <div class="col-7 col-md-8">
               <div class="numbers">
                 <div class="card-category" type="button" [routerLink]="['/agents/show-agents']" >Agents</div>
-                <p class="card-title">{{ activeAgents }}/{{totalAgents}}</p>
+                <p class="card-title">{{ availableAgents }}/{{workingAgents}}</p>
               </div>
             </div>
           </div>
@@ -160,35 +159,23 @@
   </div>
 
   <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-5">
+      <!--
       <div class="card">
-        <div class="card-header">
-          <h5 class="card-title">Project Information</h5>
-        </div>
-        <div class="card-body card-body-d">
-            Hashtopolis is available in:&nbsp;&nbsp;
-            <a href="https://github.com/hashtopolis" target="_blank" rel="noopener">
-              <fa-icon
-                      placement="bottom"
-                      ngbTooltip="Github Repository"
-                      container="body"
-                      [icon]="faGithub"
-                      aria-hidden="true"
-                      class="gray-light-ico fa-2x"
-              ></fa-icon>
-            </a>&nbsp;&nbsp;
-            <hr>
-            To get more information about how to use it, please visit the
-            <a href="https://github.com/hashtopolis/server/wiki" target="_blank" rel="noopener">
-              Wiki
-            </a> or
-            <a href="https://discord.com/channels/419123475538509844/419123475538509846" target="_blank" rel="noopener">
-              Discord
-            </a>
-        </div>
+        <app-pie-chart
+            [availableAgents]="availableAgents"
+            [unavailableAgents]="unavailableAgents"
+            [workingAgents]="workingAgents">
+          </app-pie-chart>
+      </div>
+      -->
+      <div class="card">
+        <app-progress-bar
+            [hashes]="allHashes">
+          </app-progress-bar>
       </div>
     </div>
-      <div class="col-md-8">
+      <div class="col-md-7">
         <div class="card ">
           <div class="card-header ">
             <h5 class="card-title">Cracked</h5>
@@ -199,26 +186,6 @@
         </div>
       </div>
     </div>
-    -->
-   <!-- <div cdkDropList (cdkDropListDropped)="drop($event)">   cdkDrag-->
-      <mat-grid-list cols="3" rowHeight="200px" gutterSize="10">
-        <mat-grid-tile>
-          <app-pie-chart
-            [availableAgents]="availableAgents"
-            [unavailableAgents]="unavailableAgents"
-            [workingAgents]="workingAgents">
-          </app-pie-chart>
-        </mat-grid-tile>
-        <mat-grid-tile>
-          <app-progress-bar>
-            [hashes]="allHashes"
-          </app-progress-bar>
-        </mat-grid-tile>
-        <mat-grid-tile *ngFor="let tile of tiles" cdkDrag>
-          {{ tile }}
-        </mat-grid-tile>
-      </mat-grid-list>
-    <!-- </div> -->
 </main>
 
 <!-- Refresh Button -->

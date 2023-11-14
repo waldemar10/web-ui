@@ -9,40 +9,71 @@ import * as echarts from 'echarts';
 export class ProgressBarComponent implements OnInit {
 
   @Input() hashes: any[];
+  @Input() chartTitle: string;
 
-  data: any = [
-    { name: "hash1", cracked: 3, hashes: 32 },
-    { name: "hash2", cracked: 10, hashes: 20 },
-    { name: "hash3", cracked: 30, hashes: 35 },
-    { name: "hash3", cracked: 25, hashes: 35 },
+  hashlistData: any = [
+    { name: "A", cracked: 3, hashes: 32 },
+    { name: "B", cracked: 10, hashes: 20 },
+    { name: "C", cracked: 30, hashes: 35 },
+    { name: "D", cracked: 25, hashes: 35 },
+  ]
+
+  superHashlistData: any = [
+    { name: "S-A", cracked: 13, hashes: 32 },
+    { name: "S-B", cracked: 8, hashes: 20 },
+    { name: "S-C", cracked: 27, hashes: 35 },
+    { name: "S-D", cracked: 5, hashes: 35 },
   ]
 
   chart: any;
+  testData: any = this.getTopXHashes(this.hashlistData, 4);
 
-  getTopXHashes(arr: any[], x: any) {
+  getTopXHashes(arr: any[], x: number) {
     arr.forEach((hash) => {
       hash.progress = Math.floor((hash.cracked / hash.hashes) * 100)
     });
 
-    const sortedArray = arr.sort((a, b) => b.progress - a.progress);
+    const sortedArray = arr.sort((a, b) => a.progress - b.progress);
 
     const topHashes = sortedArray.slice(0, Math.min(sortedArray.length, x));
     console.log(topHashes);
     return topHashes;
   }
 
-  testData = this.getTopXHashes(this.data, 3);
+  toggleChartData(event: any) {
+    //checked = false -> hashlists
+    const isChecked = (event.target as HTMLInputElement).checked;
+    
+    if(!isChecked){
+      this.testData = this.getTopXHashes(this.hashlistData, 3);
+    } else {
+      this.testData = this.getTopXHashes(this.superHashlistData, 4);
+    }
+
+    this.chart.setOption({
+      yAxis: [
+        {
+          data: this.testData.map((hash) => hash.name)
+        }
+      ],
+      series: [
+        {
+          data: this.testData.map((hash) => hash.progress),
+        }
+      ],
+    });
+  }
 
   ngOnInit() {
-    this.chart = echarts.init(document.getElementById('progress-bar'));
+    this.chart = echarts.init(document.getElementById("progress-bar"));
     this.chart.setOption({
       title: {
-        text: 'Hashlist Progress',
+        text: 'Progress',
         x: 'center'
       },
       yAxis: {
         type: 'category',
-        data: this.testData.map((hash) => hash.name)
+        data: this.testData.map((hash) => hash.name),
       },
       xAxis: {
         type: 'value',
