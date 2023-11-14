@@ -1,6 +1,7 @@
 import { environment } from './../../../environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { faGithub, faDiscord } from '@fortawesome/free-brands-svg-icons';
 
 @Component({
   selector: 'app-footer',
@@ -10,6 +11,9 @@ import { HttpClient } from '@angular/common/http';
   }
 })
 export class FooterComponent implements OnInit {
+
+  faGithub=faGithub;
+  faDiscord=faDiscord;
 
   url = '/assets/git-version.json';
   footerConfig = environment.config.footer;

@@ -13,12 +13,32 @@
       </div>
       <div class="col-12 col-md-8 col-xl-6 text-center text-lg-start">
           <ul class="list-inline list-group-flush list-group-borderless text-md-end mb-0">
-              <li class="list-inline-item px-0 px-sm-2">
-                  <a href={{this.footerConfig.footer_link_one.link}} target="_blank" rel="noopener">{{ this.footerConfig.footer_link_one.name }}</a>
-              </li>
-              <li class="list-inline-item px-0 px-sm-2">
-                  <a href={{this.footerConfig.footer_link_two.link}} target="_blank" rel="noopener">{{ this.footerConfig.footer_link_two.name }}</a>
-              </li>
+            <li class="list-inline-item px-0 px-sm-2">
+              <a href="{{ this.footerConfig.footer_link_one.link }}" target="_blank" rel="noopener">
+                <fa-icon
+                  placement="bottom"
+                  ngbTooltip="Github Repository"
+                  container="body"
+                  [icon]="faGithub"
+                  aria-hidden="true"
+                  class="gray-light-ico fa-2x"
+                  style="color: #171515;"
+                  ></fa-icon>
+              </a>
+            </li>
+            <li class="list-inline-item px-0 px-sm-2">
+              <a href="{{ this.footerConfig.footer_link_two.link }}" target="_blank" rel="noopener">
+                <fa-icon
+                  placement="bottom"
+                  ngbTooltip="Discord Server"
+                  container="body"
+                  [icon]="faDiscord"
+                  aria-hidden="true"
+                  class="gray-light-ico fa-2x"
+                  style="color: #7289da;"
+                  ></fa-icon>
+              </a>
+            </li>
           </ul>
       </div>
   </div>
