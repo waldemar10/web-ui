@@ -70,6 +70,7 @@ export class HomeComponent implements OnInit {
   availableAgents = 0;
   unavailableAgents = 0;
   workingAgents = 0;
+  allAgents = 0;
   totalTasks = 0;
   totalCracks = 0;
   allsupertasks = 0;
@@ -124,16 +125,26 @@ export class HomeComponent implements OnInit {
     const params = {'maxResults': this.maxResults}
 
     this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
+      this.allAgents = agents.values.length;
       this.workingAgents = agents.values.length;
       this.availableAgents = agents.values.filter(u=> u.isActive == true).length | 0;
       this.unavailableAgents = agents.values.filter(u=> u.isActive == false).length | 0;
+
+      console.log(agents)
     });
 
     //  Tasks
-    const paramst = {'maxResults': this.maxResults, 'filter': 'isArchived=false'}
+    const paramst = {'maxResults': this.maxResults}
 
     this.gs.getAll(SERV.TASKS,paramst).subscribe((tasks: any) => {
       this.totalTasks = tasks.values.filter(u=> u.isArchived != true).length | 0;
+      console.log(tasks);
+    });
+    
+    const paramst1 = {'maxResults': this.maxResults }
+    this.gs.getAll(SERV.TASKS_WRAPPER,paramst1).subscribe((wrapper: any) => {
+      
+      console.log(wrapper);
     });
 
     // SuperTasks

@@ -21,22 +21,17 @@
             <div class="col-7 col-md-8">
               <div class="numbers">
                 <div class="card-category" type="button" [routerLink]="['/agents/show-agents']" >Agents</div>
-                <p class="card-title">{{ availableAgents }}/{{workingAgents}}</p>
+                <p class="card-title">{{ allAgents }}</p>
               </div>
             </div>
           </div>
         </div>
         <div class="card-footer">
-          <hr>
-          <div class="stats">
-            <fa-icon
-                    placement="bottom"
-                    container="body"
-                    [icon]="faCheckCircle"
-                    aria-hidden="true"
-             ></fa-icon>
-             <i>Active Agents/Total Agents</i>
-          </div>
+          <app-pie-chart
+            [availableAgents]="availableAgents"
+            [unavailableAgents]="unavailableAgents"
+            [workingAgents]="workingAgents"
+          ></app-pie-chart>
         </div>
       </div>
     </div>
@@ -160,15 +155,9 @@
 
   <div class="row">
     <div class="col-md-5">
-      <!--
       <div class="card">
-        <app-pie-chart
-            [availableAgents]="availableAgents"
-            [unavailableAgents]="unavailableAgents"
-            [workingAgents]="workingAgents">
-          </app-pie-chart>
+        
       </div>
-      -->
       <div class="card">
         <app-progress-bar
             [hashes]="allHashes">

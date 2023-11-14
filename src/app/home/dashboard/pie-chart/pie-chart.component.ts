@@ -15,19 +15,26 @@ export class PieChartComponent implements OnInit {
   ngOnInit() {
     this.chart = echarts.init(document.getElementById('pieChart'));
     this.chart.setOption({
-      title: {
-        text: 'Agents overview',
-        x: 'center',
-      },
       tooltip: {
         trigger: 'item',
+      },
+      label: {
+        show: false,
+      },
+      legend: {
+        left: 'left',
+        top: "center",
+        orient: "vertical"
       },
       series: [
         {
           name: 'Pie Chart',
           type: 'pie',
-          radius: '55%',
-          center: ['50%', '60%'],
+          radius: '75%',
+          left: '60%',
+          label: {
+            show: false,
+          },
           data: [
             { value: this.workingAgents, name: 'Active Agents' },
             { value: this.availableAgents, name: 'Available Agents' },
