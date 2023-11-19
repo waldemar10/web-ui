@@ -119,26 +119,39 @@ export class HomeComponent implements OnInit {
     return JSON.parse(this.cs.getCookie('autorefresh'));
   }
 
+  getWorkingAgentIds(data: any): number[] {
+    const filteredAgentIds: number[] = [];
+  
+    if (data.length > 0) {
+      data.forEach(task => {
+        task.assignedAgents.forEach(agent => {
+          if (agent.keyspaceProgress < task.keyspace && task.keyspace !== 0) {
+            filteredAgentIds.push(agent._id);
+          }
+        });
+      });
+    }
+    return filteredAgentIds;
+  }
+
   initData() {
 
     // Agents
     const params = {'maxResults': this.maxResults}
+    const paramst = {'maxResults': this.maxResults, 'expand': 'assignedAgents'}
 
     this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
-      this.allAgents = agents.values.length;
-      this.workingAgents = agents.values.length;
-      this.availableAgents = agents.values.filter(u=> u.isActive == true).length | 0;
-      this.unavailableAgents = agents.values.filter(u=> u.isActive == false).length | 0;
+      this.gs.getAll(SERV.TASKS,paramst).subscribe((tasks: any) => {
+        let tempWorkingAgents;
 
-      console.log(agents)
-    });
+        this.totalTasks = tasks.values.filter(u=> u.isArchived != true).length;
+        tempWorkingAgents = this.getWorkingAgentIds(tasks.values);
+        this.workingAgents = tempWorkingAgents.length;
 
-    //  Tasks
-    const paramst = {'maxResults': this.maxResults}
-
-    this.gs.getAll(SERV.TASKS,paramst).subscribe((tasks: any) => {
-      this.totalTasks = tasks.values.filter(u=> u.isArchived != true).length | 0;
-      console.log(tasks);
+        this.allAgents = agents.values.length;
+        this.availableAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentsId)).length;
+        this.unavailableAgents = agents.values.filter(u=> u.isActive == false).length;
+      });
     });
     
     const paramst1 = {'maxResults': this.maxResults }

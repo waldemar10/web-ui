@@ -36,7 +36,7 @@ export class PieChartComponent implements OnInit {
             show: false,
           },
           data: [
-            { value: this.workingAgents, name: 'Active Agents' },
+            { value: this.workingAgents, name: 'Working Agents' },
             { value: this.availableAgents, name: 'Available Agents' },
             { value: this.unavailableAgents, name: 'Unavailable Agents' }
           ],
