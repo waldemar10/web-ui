@@ -32,8 +32,16 @@
 
 // Dashboard
 
+.navbar {
+  background: none;
+}
+
+.form-check-input {
+  background-color: rgb(45, 47, 49) !important;
+}
+
 .card-category {
-  background-color: #bebaba;
+  background-color: rgb(45, 47, 49);
   color: darkblue;
   font-size: 16px;
   line-height: 1.4em;
@@ -41,7 +49,7 @@
 
 .card{
   box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);
-  background-color: #bebaba;
+  background-color: rgb(45, 47, 49) !important;
   color: black;
   margin-bottom: 20px;
   position: relative;
@@ -55,13 +63,13 @@
 
     .card-body-d{
         padding: 15px 15px 10px 15px;
-        background-color: #bebaba;
+        background-color: rgb(45, 47, 49);
 
     }
 
     .card-header{
       &:not([data-background-color]){
-        background-color: #bebaba;
+        background-color: rgb(45, 47, 49);
       }
       padding: 15px 15px 0;
       border: 0;
@@ -72,7 +80,7 @@
     }
 
     .card-footer{
-        background-color: #d23434;
+        background-color: rgb(45, 47, 49) !important;
         border: 0;
 
         .stats{
