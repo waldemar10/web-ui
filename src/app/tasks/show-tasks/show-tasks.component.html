@@ -14,7 +14,7 @@
       <tr [hidden]="!isAccordionOpen">
       <!-- ID -->
         <th class="rounded-start">
-          <input type="text" (keyup)='search($event,"taskId")'/>
+          <!-- <input type="text" (keyup)='search($event,"taskId")'/> -->
         </th>
       <!-- Name -->
         <th>
@@ -22,7 +22,7 @@
         </th>
       <!-- Status -->
         <th>
-          <select [(ngModel)]="selectedStatus" (ngModelChange)="checkStatus(selectedStatus)">
+          <select [(ngModel)]="selectedStatus" (ngModelChange)="search($event, 'selectedStatus')">
             <option value="None">None</option>
             <option value="Processing">Processing</option>
             <option value="Completed">Completed</option>
@@ -30,7 +30,7 @@
         </th>
       <!-- +Info -->
         <th>
-          <select [(ngModel)]="selectedInfoPlus" (ngModelChange)="checkInfoPlus(selectedInfoPlus)" required>
+          <select [(ngModel)]="selectedInfoPlus" (ngModelChange)="search($event, 'selectedInfoPlus')" >
             <option value="" disabled selected hidden>Please Choose...</option>
             <option value="None">None</option>
             <option value="Notes">Notes</option>

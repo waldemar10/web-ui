@@ -230,100 +230,76 @@ export class ShowTasksComponent implements OnInit {
  });
 
 }
-search(term: Event, key: string) {
-  const searchTerm = term.target['value'].trim().toLowerCase();
+previousDropdownFilters: { [key: string]: string } = {};
 
+previousSearchTerms: { [key: string]: string } = {};
+
+search(term: any, key: string) {
+  const searchTerm = (term.target as HTMLInputElement)?.value?.trim().toLowerCase() ?? '';
+
+
+  this.previousSearchTerms[key] = searchTerm;
   if (searchTerm === '') {
-    this.filterData = this.alltasks;
-    return;
+    delete this.previousSearchTerms[key];
   }
 
-  switch (key) {
-    case 'taskId':
-    this.filterData = this.alltasks.filter(x => 
-      x.taskId === parseInt(searchTerm, 10));
-    break;
-  case 'taskName':
-    this.filterData = this.alltasks.filter(x => 
-      x.taskName.trim().toLowerCase().includes(searchTerm));
-    break;
-  case 'hashlistName':
-      this.filterData = this.alltasks.filter(x => 
-        x.hashlist[0].name.trim().toLowerCase().includes(searchTerm));
-    break;  
-  case 'cracked':
-      this.filterData = this.alltasks.filter(x => 
-        x.hashlist[0].cracked === parseInt(searchTerm, 10));
-    break;
-  case 'agents':
-      this.filterData = this.alltasks.filter(x => 
-        x.assignedAgents.length === parseInt(searchTerm, 10));
-    break;
-  case 'priority':
-      this.filterData = this.alltasks.filter(x => 
-        x.priority === parseInt(searchTerm, 10));
-    break;
-  case 'maxAgents':
-      this.filterData = this.alltasks.filter(x => 
-        x.maxAgents === parseInt(searchTerm, 10));
-    break;
-  default:
-    this.filterData = this.alltasks;
-    break;
-  }
-  /* if(!term.target['value']) {
-    this.filterData = this.alltasks;
-  } else {
-    this.filterData = this.alltasks.filter(x => 
-     
-       x.key.trim().toLowerCase().includes(term.target['value'].trim().toLowerCase())
-    );
-  } */
+  this.filterData = this.alltasks.filter(x => {
+    const dropdownFiltersMatch = this.applyStatusFilter(x, this.selectedStatus) &&
+                              this.applyInfoPlusFilter(x, this.selectedInfoPlus);
+
+    const searchTermsMatch = Object.keys(this.previousSearchTerms).every(searchKey => {
+      const searchValue = this.previousSearchTerms[searchKey];
+      switch (searchKey) {
+        case 'taskId':
+          return x.taskId === parseInt(searchValue, 10);
+        case 'taskName':
+          return x.taskName.trim().toLowerCase().includes(searchValue);
+        case 'hashlistName':
+          return x.hashlist[0].name.trim().toLowerCase().includes(searchValue);
+        case 'cracked':
+          return x.hashlist[0].cracked === parseInt(searchValue, 10);
+        case 'agents':
+          return x.assignedAgents.length === parseInt(searchValue, 10);
+        case 'priority':
+          return x.priority === parseInt(searchValue, 10);
+        case 'maxAgents':
+          return x.maxAgents === parseInt(searchValue, 10);
+        default:
+          return true; // Don't filter on unknown keys
+      }
+    });
+
+    return dropdownFiltersMatch && searchTermsMatch;
+  });
 }
-checkStatus(selectedStatus: string){
-  this.filterData = this.alltasks;
+
+applyStatusFilter(x: any, selectedStatus: string): boolean {
   switch (selectedStatus) {
-  case 'None':
-    this.filterData = this.alltasks;
-    break;
-  case 'Processing':
-    this.filterData = this.alltasks.filter(x => 
-      x.taskId > 0 && x.taskType === 0);
-    break;
-  case 'Completed':
-    this.filterData = this.alltasks.filter(x => 
-      (x.keyspaceProgress >= x.keyspace && x.keyspaceProgress > 0) && x.taskType === 0);
-    break;
-  default:
-    this.filterData = this.alltasks;
-    break;
+    case 'None':
+      return true;
+    case 'Processing':
+      return x.taskId > 0 && x.taskType === 0;
+    case 'Completed':
+      return (x.keyspaceProgress >= x.keyspace && x.keyspaceProgress > 0) && x.taskType === 0;
+    default:
+      return true;
   }
 }
-checkInfoPlus(selectedInfoPlus: string){
-  this.filterData = this.alltasks;
+
+applyInfoPlusFilter(x: any, selectedInfoPlus: string): boolean {
   switch (selectedInfoPlus) {
-  case 'None':
-    this.filterData = this.alltasks;
-    break;
-  case 'Notes':
-    this.filterData = this.alltasks.filter(x => 
-      x.notes !== "" && x.taskType === 0);
-    break;
-  case 'Small tasks':
-      this.filterData = this.alltasks.filter(x => 
-        x.isSmall === true && x.taskType === 0);
-    break;
-  case 'CPU only':
-    this.filterData = this.alltasks.filter(x => 
-      x.isCpuTask === true && x.taskType === 0);
-    break;
-  case 'Supertask':
-      this.filterData = this.alltasks.filter(x => 
-       x.taskType === 1);
-    break;
-  default:
-      this.filterData = this.alltasks;
-    break;
+    case 'None':
+      return true;
+    case 'Notes':
+      return x.notes !== "" && x.taskType === 0;
+    case 'Small tasks':
+      return x.isSmall === true && x.taskType === 0;
+    case 'CPU only':
+      return x.isCpuTask === true && x.taskType === 0;
+    case 'Supertask':
+      return x.taskType === 1;
+    default:
+      return true;
   }
 }
 onRefresh(){
@@ -351,6 +327,7 @@ getTasks():void {
       //Order by Task Priority. filter exclude when is cracked && (a.keyspaceProgress < a.keyspace)
       this.alltasks = prepdata.sort((a, b) => Number(b.priority) - Number(a.priority));
       this.filterData = this.alltasks;
+
       this.dtTrigger.next(null);
      });
     });
