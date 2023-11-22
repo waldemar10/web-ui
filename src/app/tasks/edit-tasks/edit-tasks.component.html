@@ -343,10 +343,10 @@
   <ngb-accordion #acc="ngbAccordion" >
     <ngb-panel>
       <ng-template ngbPanelTitle>
-        <span><b>Assing</b></span>
+        <span><b>Assign Agents</b></span>
       </ng-template>
       <ng-template ngbPanelContent>
-        <form [formGroup]="createForm">
+        <!-- <form [formGroup]="createForm">
           <grid-form-input>
             <select
                   type='text'
@@ -358,7 +358,37 @@
           </select>
           </grid-form-input>
           <button-submit (click)="asignAgents()" [name]="'Assign'"></button-submit>
-        </form>
+        </form> -->
+        <table class="table-striped table-sm" datatable [dtOptions]="dtOptionsAssignAgents">
+          <thead class="thead-light">
+              <tr>
+                <th class="rounded-start">ID</th>
+                <th>Name</th>
+                <th>Assigned to</th>
+                <th class="rounded-end">Access Group</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let agent of showAgentsDataForTable" >
+                <td >
+                  {{ agent.agentId }}
+                </td>
+                <td >
+                  {{ agent.agentName | shortenString:15 | lowercase | titlecase }}
+              </td>
+              <td >
+                <a *ngIf="agent.taskId">
+                  <a [routerLink]="['/tasks/show-tasks/',agent.taskId,'edit']"> {{ agent.taskName | shortenString:15 | lowercase | titlecase }}</a>
+                </a>
+              </td>
+              <td >
+                <div *ngFor="let group of agent.accessGroups">
+                  {{group.groupName}}
+                </div>
+            </td>
+            </tr>
+          </tbody>
+        </table>
       </ng-template>
     </ngb-panel>
   </ngb-accordion>

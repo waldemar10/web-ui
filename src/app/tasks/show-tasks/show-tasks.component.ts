@@ -57,7 +57,11 @@ export class ShowTasksComponent implements OnInit {
   whichView: string;
   isTaskactive = 0;
   currenspeed = 0;
-
+  filterData: any = [];
+  data: any = [];
+  isAccordionOpen: boolean ;
+  selectedStatus: string;
+  selectedInfoPlus: string;
   private maxResults = environment.config.prodApiMaxResults;
 
   constructor(
@@ -85,13 +89,20 @@ export class ShowTasksComponent implements OnInit {
       }
 
     this.getTasks()
-
+    
     const self = this;
     this.dtOptions = {
       dom: 'Bfrtip',
       bStateSave:true,
       destroy: true,
+      autoWidth:false,
+      bAutoWidth: false,
       order: [], // Removes the default order by id. We need it to sort by priority.
+      pageLength: -1, 
+      lengthMenu: [
+        [10, 25, 50, -1],
+        ['10 rows', '25 rows', '50 rows', 'Show all rows']
+      ],
       select: {
         style: 'multi',
         // selector: 'tr>td:nth-child(1)' //This only allows select the first row
@@ -203,8 +214,15 @@ export class ShowTasksComponent implements OnInit {
         },
         {
           extend: "pageLength",
-          className: "btn-sm"
+          className: "btn-sm",
+          titleAttr: 'Show number of rows'
+        },{
+          text:'Filter',
+          className:"btn-sm",
+          action: ( e, dt, node, config ) => {
+            this.isAccordionOpen = !this.isAccordionOpen;
         }
+      }
         ],
       }
     };
@@ -212,7 +230,78 @@ export class ShowTasksComponent implements OnInit {
  });
 
 }
+previousDropdownFilters: { [key: string]: string } = {};
 
+previousSearchTerms: { [key: string]: string } = {};
+
+search(term: any, key: string) {
+  const searchTerm = (term.target as HTMLInputElement)?.value?.trim().toLowerCase() ?? '';
+
+
+  this.previousSearchTerms[key] = searchTerm;
+  if (searchTerm === '') {
+    delete this.previousSearchTerms[key];
+  }
+
+  this.filterData = this.alltasks.filter(x => {
+    const dropdownFiltersMatch = this.applyStatusFilter(x, this.selectedStatus) &&
+                              this.applyInfoPlusFilter(x, this.selectedInfoPlus);
+
+    const searchTermsMatch = Object.keys(this.previousSearchTerms).every(searchKey => {
+      const searchValue = this.previousSearchTerms[searchKey];
+      switch (searchKey) {
+        case 'taskId':
+          return x.taskId === parseInt(searchValue, 10);
+        case 'taskName':
+          return x.taskName.trim().toLowerCase().includes(searchValue);
+        case 'hashlistName':
+          return x.hashlist[0].name.trim().toLowerCase().includes(searchValue);
+        case 'cracked':
+          return x.hashlist[0].cracked === parseInt(searchValue, 10);
+        case 'agents':
+          return x.assignedAgents.length === parseInt(searchValue, 10);
+        case 'priority':
+          return x.priority === parseInt(searchValue, 10);
+        case 'maxAgents':
+          return x.maxAgents === parseInt(searchValue, 10);
+        default:
+          return true; // Don't filter on unknown keys
+      }
+    });
+
+    return dropdownFiltersMatch && searchTermsMatch;
+  });
+}
+
+applyStatusFilter(x: any, selectedStatus: string): boolean {
+  switch (selectedStatus) {
+    case 'None':
+      return true;
+    case 'Processing':
+      return x.taskId > 0 && x.taskType === 0;
+    case 'Completed':
+      return (x.keyspaceProgress >= x.keyspace && x.keyspaceProgress > 0) && x.taskType === 0;
+    default:
+      return true;
+  }
+}
+
+applyInfoPlusFilter(x: any, selectedInfoPlus: string): boolean {
+  switch (selectedInfoPlus) {
+    case 'None':
+      return true;
+    case 'Notes':
+      return x.notes !== "" && x.taskType === 0;
+    case 'Small tasks':
+      return x.isSmall === true && x.taskType === 0;
+    case 'CPU only':
+      return x.isCpuTask === true && x.taskType === 0;
+    case 'Supertask':
+      return x.taskType === 1;
+    default:
+      return true;
+  }
+}
 onRefresh(){
   this.ngOnInit();
   this.rerender();  // rerender datatables
@@ -237,6 +326,8 @@ getTasks():void {
       let prepdata = filtertasks.concat(supertasks); // Join with supertasks
       //Order by Task Priority. filter exclude when is cracked && (a.keyspaceProgress < a.keyspace)
       this.alltasks = prepdata.sort((a, b) => Number(b.priority) - Number(a.priority));
+      this.filterData = this.alltasks;
+
       this.dtTrigger.next(null);
      });
     });

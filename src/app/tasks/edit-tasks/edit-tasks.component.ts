@@ -62,18 +62,34 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
   dtTrigger1: Subject<any> = new Subject<any>();
   dtOptions: any = {};
   dtOptions1: any = {};
+  dtOptionsAssignAgents: any = {};
   tusepreprocessor: any;
   hashlistDescrip:any;
   hashlistinform:any;
   assigAgents: any;
+  agentIds: number[] = [];
+  showAgentsDataForTable: any = [];
+  selectedData: Set<any> = new Set();
   availAgents:any;
   crackerinfo:any;
   tkeyspace: any;
   getchunks: any;
   getFiles: any;
-
+  updateSelectedData(selectedData: any[]) {
+    this.selectedData = new Set(selectedData);
+    /* this._changeDetectorRef.detectChanges(); */
+    this.agentIds = selectedData.map(item => parseInt(item.split('-')[0]));
+  }
+  getSelectedDataArray(): any[] {
+    return Array.from(this.selectedData);
+  }
+  /* isRowHighlighted(rowId: string, rowName: string): string {
+    const uniqueKey = `${rowId}-${rowName.toUpperCase()}`;
+    const dataArray = Array.from(this.selectedData);
+    return dataArray.includes(uniqueKey) ? 'highlighted-row' : '';
+  } */
   ngOnInit() {
-
+    this.getAgentsData();
     this.route.params
     .subscribe(
       (params: Params) => {
@@ -109,7 +125,55 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
     this.createForm = new FormGroup({
       'agentId': new FormControl(),
     });
-
+    this.dtOptionsAssignAgents = {
+      dom: 'Bfrtip',
+      scrollY: "700px",
+      scrollCollapse: true,
+      select:true,
+      autoWidth: false,
+        lengthMenu: [
+          [10, 25, 50, -1],
+          ['10 rows', '25 rows', '50 rows', 'Show all rows']
+        ],
+      pageLength: 10,
+      buttons: {
+        dom: {
+          button: {
+            className: 'dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt',
+          }
+        },
+        buttons: [
+          {
+            text: 'Add selected agents',
+            
+            action: (e, dt, button, config) => {
+              const selectedRows = dt.rows({ selected: true }).data().toArray();
+        
+              selectedRows.forEach(row => {
+                const rowId = row[0];
+                const rowName = row[1].toUpperCase();
+                const uniqueKey = `${rowId}-${rowName}`;
+                
+                if (this.selectedData.has(uniqueKey)) {
+                
+                  this.selectedData.delete(uniqueKey);
+                } else {
+                  
+                  this.selectedData.add(uniqueKey);
+                }
+              });
+              this.updateSelectedData(Array.from(this.selectedData));
+              this.assignAgents(this.editedTaskIndex);
+            }
+          },
+          {
+            extend: 'pageLength',
+            className: 'btn-sm',
+            titleAttr: 'Show number of rows',
+          }
+        ]
+      }
+    }
   }
 
   OnChangeValue(value){
@@ -279,6 +343,56 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
 
     })()
   }
+  getNotAssignedToCurrentTaskAgents(agents:any){
+  return agents.filter(u=> u.taskId !== this.editedTaskIndex)
+  }
+  getAgentsData() {
+    const paramsAgent = {'maxResults': this.maxResults, 'expand':'accessGroups'}
+    const params = {'maxResults': this.maxResults};
+    this.gs.getAll(SERV.AGENTS,paramsAgent).subscribe((agents: any) => {
+      this.gs.getAll(SERV.AGENT_ASSIGN,params).subscribe((agent_assign: any) => {
+        this.gs.getAll(SERV.TASKS,params).subscribe((tasks: any)=>{
+
+            const agentsData = agents.values.map(agent => {
+              const matchAgentWithAssignedAgent = agent_assign.values.find(assignedAgents => assignedAgents.agentId === agent.agentId)
+              return { ...agent, ...matchAgentWithAssignedAgent}
+            })
+            
+            this.showAgentsDataForTable = agentsData.map(mainObject => {
+              const matchTaskWithAssignedAgent = tasks.values.find(e => e.taskId === mainObject.taskId)
+              return { ...mainObject, ...matchTaskWithAssignedAgent}
+            })
+            this.showAgentsDataForTable = this.getNotAssignedToCurrentTaskAgents(this.showAgentsDataForTable);
+            
+            this.dtTrigger.next(void 0);
+            
+      })
+    });
+  });
+  }
+
+  assignAgents(taskId: number){
+
+    if (Array.isArray(this.agentIds)) {  
+      this.agentIds.forEach(agentId => {
+      const payload = {"taskId":taskId,"agentId":agentId};
+      this.gs.create(SERV.AGENT_ASSIGN,payload).subscribe(() => {
+          Swal.fire({
+            title: "Success",
+            text: "Agent Assigned!",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 1500
+          });
+          this.router.navigate(['tasks/show-tasks']);
+      });
+    });
+    }else{
+      const payload = {"taskId":taskId,"agentId":this.agentIds};
+      this.gs.create(SERV.AGENT_ASSIGN,payload);
+      this.router.navigate(['tasks/show-tasks']);
+        }
+    }
 
 /**
  * This function calculates Keyspace searched, Time Spent and Estimated Time
