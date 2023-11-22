@@ -39,6 +39,18 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   dtOptions: any = {};
   isChecked =false;
 
+  isFilterOpen: boolean = false;
+  filteredAgents: any[] = [];
+  
+  //filter values
+  nameInput: string = "";
+  ownerInput: string = "";
+  hardwareInput: string = "";
+  statusInput: string = ""
+  accessGroupInput: string = "";
+
+  public agroups: {accessGroupId: number, groupName: string, isEdit: false }[] = [];
+
   ngOnDestroy(): void {
     this.dtTrigger.unsubscribe();
   }
@@ -51,15 +63,22 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   constructor(
     private uiService: UIConfigService,
     private gs: GlobalService,
-  ) { }
+  ) {}
 
   ngOnInit(): void {
 
-    const params = {'maxResults': this.maxResults, 'expand':'accessGroups'}
+    const agentParams = {'maxResults': this.maxResults, 'expand':'accessGroups'}
+    const aGroupParams = {'maxResults': this.maxResults}
 
-    this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
+    this.gs.getAll(SERV.AGENTS,agentParams).subscribe((agents: any) => {
       this.showagents = agents.values;
+      this.filteredAgents = agents.values;
       // this.showagents.forEach(f => (f.checked = false));
+      this.dtTrigger.next(void 0);
+    });
+
+    this.gs.getAll(SERV.ACCESS_GROUPS,aGroupParams).subscribe((agroups: any) => {
+      this.agroups = agroups.values;
       this.dtTrigger.next(void 0);
     });
 
@@ -68,6 +87,12 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       dom: 'Bfrtip',
       stateSave: true,
       destroy: true,
+      lengthMenu: [
+        [10, 25, 50, -1],
+        ['10 rows', '25 rows', '50 rows', 'Show all rows']
+      ],
+      pageLength: -1, 
+      order: [[0, 'desc']],
       select: {
         style: 'multi',
         },
@@ -89,6 +114,13 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
           autoClose: true,
           action: function (e, dt, node, config) {
             self.onRefresh();
+          }
+        },
+        {
+          text: 'Filter',
+          autoClose: true,
+          action: function (e, dt, node, config) {
+            self.toggleFilter();
           }
         },
         {
@@ -187,6 +219,46 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   onRefresh(){
     this.rerender();
     this.ngOnInit();
+  }
+
+  toggleFilter(){
+    this.isFilterOpen = !this.isFilterOpen;
+  }
+
+  filterByAgentName(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      return agent.agentName.toLowerCase().includes(this.nameInput.toLowerCase());
+    })
+  }
+
+  //TODO: Change Owner to display UserName instead of an Id
+  filterByOwner(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      return agent.userId.toString().toLowerCase().includes(this.ownerInput.toLowerCase());
+    })
+  }
+
+  filterByHardware(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      return agent.devices.toLowerCase().includes(this.hardwareInput.toLowerCase());
+    })
+  }
+
+  filterByStatus(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      if(this.statusInput === "Active" && agent.isActive)
+        return true;
+      else if(this.statusInput === "Inactive" && !agent.isActive)
+        return true;
+      else
+        return false;
+    })
+  }
+
+  filterByAccessGroup(){
+    this.filteredAgents = this.showagents.filter((agent) => {
+      return this.accessGroupInput === agent.accessGroups[0].groupName;
+    })
   }
 
   setCheckAll(){

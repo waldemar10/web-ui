@@ -432,7 +432,7 @@
           </td>
 
           <td style="white-space: nowrap;">
-            <a [routerLink]="['/agents/show-agents',aa.agentId,'edit']">{{ aa.agentName | shortenString:15 | lowercase | titlecase }}</a>
+            <a [routerLink]="['/agents/agent-status',aa.agentId,'edit']">{{ aa.agentName | shortenString:15 | lowercase | titlecase }}</a>
             <span *ngIf="aa.isTrusted === true" ><fa-icon [icon]="faLock" aria-hidden="true" ngbTooltip='Trust agent with secret data'></fa-icon></span>
           </td>
           <!-- Agent Status -->
