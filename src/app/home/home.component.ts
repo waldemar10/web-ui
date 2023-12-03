@@ -18,34 +18,9 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styles: [
-    `
-      .grid-container {
-        display: grid;
-        grid-template-columns: repeat(3, 425px);
-        grid-gap: 10px;
-      }
-
-      .grid-item {
-        background-color: #ececec;
-        padding: 10px;
-        text-align: center;
-        border: 1px solid #ccc;
-        width: 425px;
-      }
-    `,
-  ]
 })
 @PageTitle(['Dashboard'])
 export class HomeComponent implements OnInit {
-
-  tiles = ['Tile 1', 'Tile 2', 'Tile 3', 'Tile 4', 'Tile 5', 'Tile 6', 'Tile 7', 'Tile 8', 'Tile 9'];
-
-  drop(event: CdkDragDrop<string[]>) {
-    
-    console.log(event)
-    moveItemInArray(this.tiles, event.previousIndex, event.currentIndex);
-  }
 
   username = 'Admin';
 
@@ -67,8 +42,8 @@ export class HomeComponent implements OnInit {
   }
 
   // Dashboard variables
-  availableAgents = 0;
-  unavailableAgents = 0;
+  activeAgents = 0;
+  inactiveAgents = 0;
   workingAgents = 0;
   allAgents = 0;
   totalTasks = 0;
@@ -149,15 +124,9 @@ export class HomeComponent implements OnInit {
         this.workingAgents = tempWorkingAgents.length;
 
         this.allAgents = agents.values.length;
-        this.availableAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentsId)).length;
-        this.unavailableAgents = agents.values.filter(u=> u.isActive == false).length;
+        this.activeAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentsId)).length;
+        this.inactiveAgents = agents.values.filter(u=> u.isActive == false).length;
       });
-    });
-    
-    const paramst1 = {'maxResults': this.maxResults }
-    this.gs.getAll(SERV.TASKS_WRAPPER,paramst1).subscribe((wrapper: any) => {
-      
-      console.log(wrapper);
     });
 
     // SuperTasks
