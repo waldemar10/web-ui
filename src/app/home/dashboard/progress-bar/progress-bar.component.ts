@@ -4,12 +4,10 @@ import * as echarts from 'echarts';
 @Component({
   selector: 'app-progress-bar',
   templateUrl: './progress-bar.component.html',
-  styleUrls: ['./progress-bar.component.scss']
 })
-export class ProgressBarComponent implements OnInit {
+export class ProgressBarComponent implements OnInit, OnChanges {
 
-  @Input() hashes: any[];
-  @Input() chartTitle: string;
+  @Input() tasks: any[];
 
   hashlistData: any = [
     { name: "A", cracked: 3, hashes: 32 },
@@ -26,21 +24,9 @@ export class ProgressBarComponent implements OnInit {
   ]
 
   chart: any;
-  testData: any = this.getTopXHashes(this.hashlistData, 4);
-
-  getTopXHashes(arr: any[], x: number) {
-    arr.forEach((hash) => {
-      hash.progress = Math.floor((hash.cracked / hash.hashes) * 100)
-    });
-
-    const sortedArray = arr.sort((a, b) => a.progress - b.progress);
-
-    const topHashes = sortedArray.slice(0, Math.min(sortedArray.length, x));
-    console.log(topHashes);
-    return topHashes;
-  }
 
   toggleChartData(event: any) {
+    /*
     //checked = false -> hashlists
     const isChecked = (event.target as HTMLInputElement).checked;
     
@@ -62,6 +48,7 @@ export class ProgressBarComponent implements OnInit {
         }
       ],
     });
+    */
   }
 
   ngOnInit() {
@@ -73,7 +60,7 @@ export class ProgressBarComponent implements OnInit {
       },
       yAxis: {
         type: 'category',
-        data: this.testData.map((hash) => hash.name),
+        data: this.tasks.map((task) => task.taskName),
       },
       xAxis: {
         type: 'value',
@@ -88,12 +75,50 @@ export class ProgressBarComponent implements OnInit {
       },
       series: [
         {
-          data: this.testData.map((hash) => hash.progress),
+          data: this.tasks.map((task) => ({
+            value: task.progress,
+            itemStyle: {
+              color: task.color
+            }
+          })),
           type: 'bar',
           showBackground: true,
           backgroundStyle: {
             color: 'rgba(180, 180, 180, 0.2)'
           }
+        }
+      ],
+      tooltip: {
+        formatter: '{b}: {c}%',
+      },
+    });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log(this.tasks);
+    if(changes['tasks'])
+    {
+      this.tasks = changes['tasks'].currentValue;
+    }
+
+    this.updateData();
+  }
+
+  private updateData(): void {
+    this.chart.setOption({
+      series: [
+        {
+          data: this.tasks.map((task) => ({
+            value: task.progress,
+            itemStyle: {
+              color: task.color
+            }
+          })),
+        },
+      ],
+      yAxis: [
+        {
+          data: this.tasks.map((task) => task.taskName),
         }
       ],
       tooltip: {

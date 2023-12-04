@@ -399,6 +399,7 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
     const params = {'maxResults': this.chunkresults};
     this.gs.getAll(SERV.CHUNKS,{'maxResults': this.chunkresults, 'filter': 'taskId='+id+''}).subscribe((result: any)=>{
       this.timeCalc(result.values);
+      console.log(result.values);
       // this.initVisualGraph(result.values, 150, 150); // Get data for visual graph
       this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
       this.getchunks = result.values.map(mainObject => {
