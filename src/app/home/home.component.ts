@@ -4,7 +4,7 @@ import { Component, ElementRef, OnInit } from '@angular/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { environment } from 'src/environments/environment';
 import { CanvasRenderer } from 'echarts/renderers';
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, forkJoin } from 'rxjs';
 import { HeatmapChart } from 'echarts/charts';
 import * as echarts from 'echarts/core';
 
@@ -110,46 +110,48 @@ export class HomeComponent implements OnInit {
     return filteredAgentIds;
   }  
 
-  timeCalc(chunks, task){
+  timeCalc(chunks, task) {
     let cprogress = [];
     let timespent = [];
     const current = 0;
-    for(let i=0; i < chunks.length; i++){
+  
+    for (let i = 0; i < chunks.length; i++) {
       cprogress.push(chunks[i].checkpoint - chunks[i].skip);
-      if(chunks[i].dispatchTime > current){
+      if (chunks[i].dispatchTime > current) {
         timespent.push(chunks[i].solveTime - chunks[i].dispatchTime);
       } else if (chunks[i].solveTime > current) {
-        timespent.push(chunks[i].solveTime- current);
+        timespent.push(chunks[i].solveTime - current);
       }
     }
+  
     const totalCProgress = cprogress.reduce((a, i) => a + i, 0);
     const totalTimespent = timespent.reduce((a, i) => a + i, 0);
-
+  
     if (totalCProgress !== 0 && totalTimespent !== 0 && task.keyspace !== 0) {
       const estimated = (totalTimespent / (totalCProgress / task.keyspace) - totalTimespent);
       task.remainingTime = estimated;
     } else {
-      task.remainingTime = "200";
+      task.remainingTime = 0;
     }
+  
+    task.progress = parseFloat((totalCProgress / task.keyspace * 100).toFixed(2));
   }
-
+  
   getTopXHashes(arr: any[], x: number) {
-    arr.forEach((task) => {
-      if(task.keyspaceProgress !== 0)
-        task.progress = Math.floor((task.keyspace / task.keyspaceProgress) * 100)
-      else
-        task.progress = 0;
+    const observables = arr.map(task => {
+      return this.gs.getAll(SERV.CHUNKS, {'maxResults': this.maxResults, 'filter': 'taskId=' + task.taskId + ''});
     });
-
-    const sortedArray = arr.sort((a, b) => b.progress - a.progress);
-
-    this.topTasks = sortedArray.slice(0, Math.min(sortedArray.length, x));
-
-    this.topTasks.forEach((task) => {
-      this.gs.getAll(SERV.CHUNKS,{'maxResults': this.maxResults, 'filter': 'taskId='+task.taskId+''}).subscribe((result: any)=>{
-        this.timeCalc(result.values, task);
+    
+    //Makes sure all async tasks are completed
+    forkJoin(observables).subscribe((results: any[]) => {
+      results.forEach((result, index) => {
+        this.timeCalc(result.values, arr[index]);
       });
-    })
+  
+      const sortedArray = arr.sort((a, b) => a.progress - b.progress);
+      this.topTasks = sortedArray.slice(0, Math.min(sortedArray.length, x));
+      console.log(this.topTasks);
+    });
   }
 
   initData() {

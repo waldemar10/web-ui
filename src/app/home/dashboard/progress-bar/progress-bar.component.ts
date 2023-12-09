@@ -1,13 +1,21 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import * as echarts from 'echarts';
+import { SecondsToTimePipe } from 'src/app/core/_pipes/secondsto-time.pipe';
 
 @Component({
   selector: 'app-progress-bar',
   templateUrl: './progress-bar.component.html',
+  providers: [SecondsToTimePipe]
 })
 export class ProgressBarComponent implements OnInit, OnChanges {
 
   @Input() tasks: any[];
+
+  constructor(private secToTime: SecondsToTimePipe) {}
+
+  formatEstimatedTime(seconds: number): string {
+     return this.secToTime.transform(seconds);
+  }
 
   hashlistData: any = [
     { name: "A", cracked: 3, hashes: 32 },
@@ -79,8 +87,9 @@ export class ProgressBarComponent implements OnInit, OnChanges {
             value: task.progress,
             itemStyle: {
               color: task.color
-            }
-          })),
+            },
+            estimated: task.remainingTime,
+          })).reverse(),
           type: 'bar',
           showBackground: true,
           backgroundStyle: {
@@ -95,7 +104,6 @@ export class ProgressBarComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(this.tasks);
     if(changes['tasks'])
     {
       this.tasks = changes['tasks'].currentValue;
@@ -104,7 +112,7 @@ export class ProgressBarComponent implements OnInit, OnChanges {
     this.updateData();
   }
 
-  private updateData(): void {
+  private updateData(): void { 
     this.chart.setOption({
       series: [
         {
@@ -112,8 +120,9 @@ export class ProgressBarComponent implements OnInit, OnChanges {
             value: task.progress,
             itemStyle: {
               color: task.color
-            }
-          })),
+            },
+            estimated: task.remainingTime,
+          })).reverse(),
         },
       ],
       yAxis: [
@@ -122,7 +131,10 @@ export class ProgressBarComponent implements OnInit, OnChanges {
         }
       ],
       tooltip: {
-        formatter: '{b}: {c}%',
+        formatter: (params) => {
+            const task = params.data;
+            return `Progress: ${task.value}% <br> Estimated Time: ${this.formatEstimatedTime(task.estimated)}`;
+        },
       },
     });
   }
