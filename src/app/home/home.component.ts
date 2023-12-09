@@ -97,11 +97,10 @@ export class HomeComponent implements OnInit {
 
   getWorkingAgentIds(data: any): number[] {
     const filteredAgentIds: number[] = [];
-  
     if (data.length > 0) {
       data.forEach(task => {
         task.assignedAgents.forEach(agent => {
-          if (agent.keyspaceProgress < task.keyspace && task.keyspace !== 0) {
+          if (task.progress !== 100) {
             filteredAgentIds.push(agent._id);
           }
         });
@@ -169,8 +168,8 @@ export class HomeComponent implements OnInit {
         this.workingAgents = tempWorkingAgents.length;
 
         this.allAgents = agents.values.length;
-        this.activeAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentsId)).length;
-        this.inactiveAgents = agents.values.filter(u=> u.isActive == false).length;
+        this.activeAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentId)).length;
+        this.inactiveAgents = agents.values.filter(u => u.isActive == false).length;
 
         this.getTopXHashes(tasks.values, 3);
       });
