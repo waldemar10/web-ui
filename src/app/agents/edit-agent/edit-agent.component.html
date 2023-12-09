@@ -205,6 +205,126 @@
       </ngb-panel>
     </ngb-accordion>
     &nbsp;
+
+    <ngb-accordion #acc="ngbAccordion" >
+      <ngb-panel>
+        <ng-template ngbPanelTitle>
+          <span><b>Temperature & Utilization Settings</b></span>
+        </ng-template>
+        <ng-template ngbPanelContent>
+          <div class="d-flex mb-2">
+            <!-- CPU Temperature -->
+            <div class="input-group-text flex-column" style="text-align: left !important; margin-right: 1rem;">
+              <grid-form-input [name]="'CPU Temperature high'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="cpuTempHigh"
+                    class="form-control"
+                    formControlName="cpuTempHigh"
+                  >
+                </div>
+              </grid-form-input>
+
+              <grid-form-input [name]="'CPU Temperature mid'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="cpuTempMid"
+                    class="form-control"
+                    formControlName="cpuTempMid"
+                  >
+                </div>
+              </grid-form-input>
+
+              <grid-form-input [name]="'CPU Temperature low'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="cpuTempLow"
+                    class="form-control"
+                    formControlName="cpuTempLow"
+                  >
+                </div>
+              </grid-form-input>
+            </div>
+
+            <!-- CPU Utilization -->
+            <div class="input-group-text flex-column" style="text-align: left !important; margin-right: 1rem;">
+              <grid-form-input [name]="'CPU Utilization high'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="cpuUtilHigh"
+                    class="form-control"
+                    formControlName="cpuUtilHigh"
+                  >
+                </div>
+              </grid-form-input>
+    
+              <grid-form-input [name]="'CPU Utilization mid'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="cpuUtilMid"
+                    class="form-control"
+                    formControlName="cpuUtilMid"
+                  >
+                </div>
+              </grid-form-input>
+
+              <grid-form-input [name]="'CPU Utilization low'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="cpuUtilLow"
+                    class="form-control"
+                    formControlName="cpuUtilLow"
+                  >
+                </div>
+              </grid-form-input>     
+            </div>
+    
+            <!-- Device Utilization -->
+            <div class="input-group-text flex-column" style="text-align: left !important;">
+              <grid-form-input [name]="'Device Utilization high'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="deviceUtilHigh"
+                    class="form-control"
+                    formControlName="deviceUtilHigh"
+                  >
+                </div>
+              </grid-form-input>
+    
+              <grid-form-input [name]="'Device Utilization mid'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="deviceUtilMid"
+                    class="form-control"
+                    formControlName="deviceUtilMid"
+                  >
+                </div>
+              </grid-form-input>
+              
+              <grid-form-input [name]="'Device Utilization low'" [labelclass]="'display-col'">
+                <div class="col-4">
+                  <input
+                    type="number"
+                    id="deviceUtilLow"
+                    class="form-control"
+                    formControlName="deviceUtilLow"
+                  >
+                </div>
+              </grid-form-input>           
+            </div>
+          </div>
+        </ng-template>
+      </ngb-panel>
+    </ngb-accordion>
+
     <grid-form-input [name]="'Active'" [labelclass]="'display-col'">
       <div class="form-check form-switch">
         <input
@@ -215,6 +335,7 @@
         >
       </div>
     </grid-form-input>
+             
     <button-submit [name]="'Update'"></button-submit>
   </form>
 </grid-main>

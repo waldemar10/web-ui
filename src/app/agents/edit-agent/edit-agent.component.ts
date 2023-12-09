@@ -84,7 +84,18 @@ export class EditAgentComponent implements OnInit {
       'cpuOnly': new FormControl(),
       'cmdPars': new FormControl(''),
       'ignoreErrors': new FormControl(''),
-      'isTrusted': new FormControl('')
+      'isTrusted': new FormControl(''),
+
+
+      'cpuTempHigh': new FormControl(''),
+      'cpuTempMid': new FormControl(''),
+      'cpuTempLow': new FormControl(''),
+      'cpuUtilHigh': new FormControl(''),
+      'cpuUtilMid': new FormControl(''),
+      'cpuUtilLow': new FormControl(''),
+      'deviceUtilHigh': new FormControl(''),
+      'deviceUtilMid': new FormControl(''),
+      'deviceUtilLow': new FormControl(''),
     });
 
     this.updateAssignForm = new FormGroup({
@@ -220,7 +231,17 @@ export class EditAgentComponent implements OnInit {
         'cpuOnly': new FormControl(result['cpuOnly']),
         'cmdPars': new FormControl(result['cmdPars']),
         'ignoreErrors': new FormControl(result['ignoreErrors']),
-        'isTrusted': new FormControl(result['isTrusted'])
+        'isTrusted': new FormControl(result['isTrusted']),
+
+        'cpuTempHigh': new FormControl(this.uiService.getUIsettings("agentTempThreshold2").value),
+        'cpuTempMid': new FormControl(this.uiService.getUIsettings("agentTempThreshold1").value),
+        'cpuTempLow': new FormControl(this.uiService.getUIsettings("agentTempThreshold1").value),
+        'cpuUtilHigh': new FormControl(this.uiService.getUIsettings("agentUtilThreshold2").value),
+        'cpuUtilMid': new FormControl(this.uiService.getUIsettings("agentUtilThreshold1").value),
+        'cpuUtilLow': new FormControl(this.uiService.getUIsettings("agentUtilThreshold1").value),
+        'deviceUtilHigh': new FormControl(this.uiService.getUIsettings("agentUtilThreshold2").value),
+        'deviceUtilMid': new FormControl(this.uiService.getUIsettings("agentUtilThreshold1").value),
+        'deviceUtilLow': new FormControl(this.uiService.getUIsettings("agentUtilThreshold1").value),
       });
     });
     this.gs.getAll(SERV.AGENT_ASSIGN, {'filter':'agentId='+this.editedAgentIndex+''}).subscribe((assign: any) => {
