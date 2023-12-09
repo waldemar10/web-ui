@@ -13,50 +13,13 @@ export class ProgressBarComponent implements OnInit, OnChanges {
 
   constructor(private secToTime: SecondsToTimePipe) {}
 
-  formatEstimatedTime(seconds: number): string {
-     return this.secToTime.transform(seconds);
-  }
-
-  hashlistData: any = [
-    { name: "A", cracked: 3, hashes: 32 },
-    { name: "B", cracked: 10, hashes: 20 },
-    { name: "C", cracked: 30, hashes: 35 },
-    { name: "D", cracked: 25, hashes: 35 },
-  ]
-
-  superHashlistData: any = [
-    { name: "S-A", cracked: 13, hashes: 32 },
-    { name: "S-B", cracked: 8, hashes: 20 },
-    { name: "S-C", cracked: 27, hashes: 35 },
-    { name: "S-D", cracked: 5, hashes: 35 },
-  ]
-
   chart: any;
 
-  toggleChartData(event: any) {
-    /*
-    //checked = false -> hashlists
-    const isChecked = (event.target as HTMLInputElement).checked;
-    
-    if(!isChecked){
-      this.testData = this.getTopXHashes(this.hashlistData, 3);
-    } else {
-      this.testData = this.getTopXHashes(this.superHashlistData, 4);
-    }
+  formatEstimatedTime(seconds: number): string {
+    return this.secToTime.transform(seconds);
+  }
 
-    this.chart.setOption({
-      yAxis: [
-        {
-          data: this.testData.map((hash) => hash.name)
-        }
-      ],
-      series: [
-        {
-          data: this.testData.map((hash) => hash.progress),
-        }
-      ],
-    });
-    */
+  toggleChartData(event: any) {
   }
 
   ngOnInit() {
@@ -89,7 +52,7 @@ export class ProgressBarComponent implements OnInit, OnChanges {
               color: task.color
             },
             estimated: task.remainingTime,
-          })).reverse(),
+          })),
           type: 'bar',
           showBackground: true,
           backgroundStyle: {
@@ -98,7 +61,10 @@ export class ProgressBarComponent implements OnInit, OnChanges {
         }
       ],
       tooltip: {
-        formatter: '{b}: {c}%',
+        formatter: (params) => {
+            const task = params.data;
+            return `${params.name} Progress: ${task.value}% <br> Estimated Time: ${this.formatEstimatedTime(task.estimated)}`;
+        },
       },
     });
   }
@@ -122,7 +88,7 @@ export class ProgressBarComponent implements OnInit, OnChanges {
               color: task.color
             },
             estimated: task.remainingTime,
-          })).reverse(),
+          })),
         },
       ],
       yAxis: [
@@ -133,7 +99,7 @@ export class ProgressBarComponent implements OnInit, OnChanges {
       tooltip: {
         formatter: (params) => {
             const task = params.data;
-            return `Progress: ${task.value}% <br> Estimated Time: ${this.formatEstimatedTime(task.estimated)}`;
+            return `${params.name} Progress: ${task.value}% <br> Estimated Time: ${this.formatEstimatedTime(task.estimated)}`;
         },
       },
     });

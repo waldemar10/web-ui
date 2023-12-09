@@ -100,7 +100,7 @@ export class HomeComponent implements OnInit {
     if (data.length > 0) {
       data.forEach(task => {
         task.assignedAgents.forEach(agent => {
-          if (task.progress !== 100) {
+          if (task.progress !== 100 && agent.isActive) {
             filteredAgentIds.push(agent._id);
           }
         });
@@ -129,27 +129,27 @@ export class HomeComponent implements OnInit {
     if (totalCProgress !== 0 && totalTimespent !== 0 && task.keyspace !== 0) {
       const estimated = (totalTimespent / (totalCProgress / task.keyspace) - totalTimespent);
       task.remainingTime = estimated;
+      task.progress = parseFloat((totalCProgress / task.keyspace * 100).toFixed(2));
     } else {
-      task.remainingTime = 0;
+      task.remainingTime = "N/A";
+      task.progress = 0; 
     }
-  
-    task.progress = parseFloat((totalCProgress / task.keyspace * 100).toFixed(2));
   }
   
-  getTopXHashes(arr: any[], x: number) {
+  getTopXTasks(arr: any[], x: number) {
     const observables = arr.map(task => {
       return this.gs.getAll(SERV.CHUNKS, {'maxResults': this.maxResults, 'filter': 'taskId=' + task.taskId + ''});
     });
     
-    //Makes sure all async tasks are completed
+    //Makes sure all async calls are completed
     forkJoin(observables).subscribe((results: any[]) => {
       results.forEach((result, index) => {
         this.timeCalc(result.values, arr[index]);
       });
-  
-      const sortedArray = arr.sort((a, b) => a.progress - b.progress);
+      
+      const sortedArray = arr.filter(task => task.progress > 0 && task.progress < 100);
+      sortedArray.sort((a, b) => a.progress - b.progress);
       this.topTasks = sortedArray.slice(0, Math.min(sortedArray.length, x));
-      console.log(this.topTasks);
     });
   }
 
@@ -162,16 +162,17 @@ export class HomeComponent implements OnInit {
     this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
       this.gs.getAll(SERV.TASKS,paramst).subscribe((tasks: any) => {
         let tempWorkingAgents;
+        let unArchivedTasks = tasks.values.filter(u=> u.isArchived != true)
 
-        this.totalTasks = tasks.values.filter(u=> u.isArchived != true).length;
-        tempWorkingAgents = this.getWorkingAgentIds(tasks.values);
+        this.totalTasks = unArchivedTasks.length;
+        tempWorkingAgents = this.getWorkingAgentIds(unArchivedTasks);
         this.workingAgents = tempWorkingAgents.length;
 
         this.allAgents = agents.values.length;
         this.activeAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentId)).length;
         this.inactiveAgents = agents.values.filter(u => u.isActive == false).length;
 
-        this.getTopXHashes(tasks.values, 3);
+        this.getTopXTasks(tasks.values, 3);
       });
     });
 
