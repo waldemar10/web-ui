@@ -59,7 +59,16 @@ export class HealthChecksComponent implements OnInit {
 
   private maxResults = environment.config.prodApiMaxResults;
 
-  public mergedObjects: any
+  public mergedObjects: any;
+
+  getColor(status: number): string {
+    switch (status) {
+      case 0: return 'orange';
+      case 1: return 'green';   
+      case -1: return 'red';   
+      default: return 'black';  
+    }
+  }
 
   ngOnInit(): void {
 
@@ -79,7 +88,12 @@ export class HealthChecksComponent implements OnInit {
   this.dtOptions = {
     dom: 'Bfrtip',
     stateSave: true,
-    select: true,
+    select: false,
+    lengthMenu: [
+      [10, 25, 50, -1],
+      ['10 rows', '25 rows', '50 rows', 'Show all rows']
+    ],
+    pageLength: -1,
     buttons: {
       dom: {
         button: {
@@ -135,13 +149,12 @@ export class HealthChecksComponent implements OnInit {
         {
           extend: "pageLength",
           className: "btn-sm"
-        }
+        },
       ],
     }
   };
 
   }
-
   onRefresh(){
     this.rerender();
     this.ngOnInit();
