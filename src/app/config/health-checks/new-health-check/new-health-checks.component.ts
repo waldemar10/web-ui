@@ -1,3 +1,4 @@
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
 import { Component, OnInit } from '@angular/core';
@@ -16,6 +17,8 @@ import { environment } from 'src/environments/environment';
 @PageTitle(['New Health Check'])
 export class NewHealthChecksComponent implements OnInit {
   private maxResults = environment.config.prodApiMaxResults;
+  faInfoCircle=faInfoCircle;
+
   // Form create Health Check
   createForm: FormGroup;
   
@@ -27,7 +30,8 @@ export class NewHealthChecksComponent implements OnInit {
   crackertype: any = [];
   crackerversions: any = [];
   
-  agents: any[] = [];
+  agents_eligible: any[] = [];
+  agents_notEligible: any[] = [];
   filteredAgents: any[] = [];
   selectedAgents: any[] = [];
   agentInput: string = "";
@@ -35,17 +39,20 @@ export class NewHealthChecksComponent implements OnInit {
   ngOnInit(): void {
     const params = {'maxResults': this.maxResults}
 
+    const settings = JSON.parse(localStorage.getItem("uis"));
+    const agentResponseTime = settings.find(entry => entry.name === "statustimer").value;
+
     this.gs.getAll(SERV.CRACKERS_TYPES).subscribe((crackers: any) => {
       this.crackertype = crackers.values;
     });
 
     this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
+      console.log(agents.values)
       const tempAgents = agents.values;
       tempAgents.forEach(agent => {
         agent.selected = false;
       })
-      this.agents = tempAgents;
-      this.filteredAgents = tempAgents;
+      this.getEligibleAgentsForCheck(tempAgents, +agentResponseTime);
     });
 
     this.createForm = new FormGroup({
@@ -57,7 +64,7 @@ export class NewHealthChecksComponent implements OnInit {
 
   onInput() {
     const input = this.agentInput.toLocaleLowerCase();
-    this.filteredAgents = this.agents.filter((agent) => agent.agentName.toLowerCase().includes(input))
+    this.filteredAgents = this.agents_eligible.filter((agent) => agent.agentName.toLowerCase().includes(input))
   }
 
   selectAgent(agent: any) {
@@ -65,13 +72,19 @@ export class NewHealthChecksComponent implements OnInit {
   }
 
   selectAll() {
-    this.agents.forEach(agent => {
+    this.agents_eligible.forEach(agent => {
       agent.selected = true;
     })
   }
 
+  deselectAll() {
+    this.agents_eligible.forEach(agent => {
+      agent.selected = false;
+    })
+  }
+
   selectInactive() {
-    this.agents.forEach(agent => {
+    this.agents_eligible.forEach(agent => {
       if(agent.isActive === false){
         agent.selected = true;
       }
@@ -80,11 +93,22 @@ export class NewHealthChecksComponent implements OnInit {
 
   getSelectedAgents() {
     const temp = [];
-    this.agents.forEach((agent) => {
+    this.agents_eligible.forEach((agent) => {
       if(agent.selected)
         temp.push(agent.agentId);
     })
     this.selectedAgents = temp;
+  }
+
+  getEligibleAgentsForCheck(tempAgents: any[], agentResponseTime: number) {
+    const currentTime = Math.floor(new Date().getTime() / 1000);
+    const responseThreshold = currentTime - agentResponseTime;
+
+    //Agent responded which means its connected to the server
+    this.agents_eligible = tempAgents.filter((agent) => agent.lastTime >= responseThreshold);
+    this.agents_notEligible = tempAgents.filter((agent) => agent.lastTime < responseThreshold);
+  
+    this.filteredAgents = this.agents_eligible;
   }
 
   onChangeBinary(id: string){
