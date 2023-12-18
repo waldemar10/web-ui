@@ -10,8 +10,9 @@ import { SecondsToTimePipe } from 'src/app/core/_pipes/secondsto-time.pipe';
 export class ProgressBarComponent implements OnInit, OnChanges {
 
   @Input() tasks: any[];
-
-  constructor(private secToTime: SecondsToTimePipe) {}
+  showColor: boolean;
+ 
+  constructor(private secToTime: SecondsToTimePipe,) {}
 
   chart: any;
 
@@ -19,14 +20,11 @@ export class ProgressBarComponent implements OnInit, OnChanges {
     return this.secToTime.transform(seconds);
   }
 
-  toggleChartData(event: any) {
-  }
-
   ngOnInit() {
     this.chart = echarts.init(document.getElementById("progress-bar"));
     this.chart.setOption({
       title: {
-        text: 'Progress',
+        text: 'Tasks Progress',
         x: 'center'
       },
       yAxis: {
@@ -48,9 +46,9 @@ export class ProgressBarComponent implements OnInit, OnChanges {
         {
           data: this.tasks.map((task) => ({
             value: task.progress,
-            itemStyle: {
+            itemStyle: this.showColor ? {
               color: task.color
-            },
+            }: { }, 
             estimated: task.remainingTime,
           })),
           type: 'bar',
@@ -75,6 +73,8 @@ export class ProgressBarComponent implements OnInit, OnChanges {
       this.tasks = changes['tasks'].currentValue;
     }
 
+    const settings = localStorage.getItem('chartSettings');
+    this.showColor = JSON.parse(settings).showColor;
     this.updateData();
   }
 
@@ -84,9 +84,9 @@ export class ProgressBarComponent implements OnInit, OnChanges {
         {
           data: this.tasks.map((task) => ({
             value: task.progress,
-            itemStyle: {
+            itemStyle: this.showColor ? {
               color: task.color
-            },
+            }: { }, 
             estimated: task.remainingTime,
           })),
         },

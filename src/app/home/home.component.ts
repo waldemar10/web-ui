@@ -1,6 +1,6 @@
-import { faRefresh, faPauseCircle, faInfoCircle, faUserSecret, faTasks, faTasksAlt, faChainBroken, faCalendarWeek, faCalendarDay, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faRefresh, faPauseCircle, faInfoCircle, faUserSecret, faTasks, faTasksAlt, faChainBroken, faCalendarWeek, faCalendarDay, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { TitleComponent, CalendarComponent, TooltipComponent, VisualMapComponent } from 'echarts/components';
-import { Component, ElementRef, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { environment } from 'src/environments/environment';
 import { CanvasRenderer } from 'echarts/renderers';
@@ -13,7 +13,9 @@ import { PageTitle } from 'src/app/core/_decorators/autotitle';
 import { SERV } from '../core/_services/main.config';
 import { CookieService } from '../core/_services/shared/cookies.service';
 
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { ModalDismissReasons, NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
+import { FormControl, FormGroup } from '@angular/forms';
+import Swal from 'sweetalert2/dist/sweetalert2.js';
 
 @Component({
   selector: 'app-home',
@@ -21,6 +23,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 })
 @PageTitle(['Dashboard'])
 export class HomeComponent implements OnInit {
+  @ViewChild('chartSettings') modal: any;
 
   username = 'Admin';
 
@@ -34,6 +37,7 @@ export class HomeComponent implements OnInit {
   faTasksAlt=faTasksAlt;
   faRefresh=faRefresh;
   faTasks=faTasks;
+  faEdit=faEdit;
 
   faGithub=faGithub;
 
@@ -58,12 +62,24 @@ export class HomeComponent implements OnInit {
   public punchCardOpts = {}
   public punchCardOptss = {}
 
+  settingsForm: FormGroup;
+  numOfTasks = this.getChartSettings("numOfTasks");
+  showColor = this.getChartSettings("showColor");
+
   constructor(
     private gs: GlobalService,
-    private cs: CookieService
-  ) { }
+    private cs: CookieService,
+    private modalService: NgbModal,
+  ) {}
+
+  private modalRef: NgbModalRef;
 
   ngOnInit(): void {
+
+    this.settingsForm = new FormGroup({
+      showColor: new FormControl(this.showColor),
+      numberOfTasks: new FormControl(this.numOfTasks),
+  });
 
     this.initData();
     this.storedAutorefresh = this.getAutoreload();
@@ -147,10 +163,75 @@ export class HomeComponent implements OnInit {
         this.timeCalc(result.values, arr[index]);
       });
       
-      const sortedArray = arr.filter(task => task.progress > 0 && task.progress < 100);
+      const sortedArray = arr.filter(task => task.progress >= 0 && task.progress < 100);
       sortedArray.sort((a, b) => a.progress - b.progress);
       this.topTasks = sortedArray.slice(0, Math.min(sortedArray.length, x));
     });
+  }
+
+  //Progressbar settings
+  closeResult = '';
+  openModal() {
+    this.modalRef = this.modalService.open(this.modal, { centered: true });
+
+    this.modalRef.result.then(
+      (result) => {
+        this.closeResult = `Closed with: ${result}`;
+      },
+      (reason) => {
+        this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
+      }
+    );
+  }
+
+  private getDismissReason(reason: any): string {
+		if (reason === ModalDismissReasons.ESC) {
+			return 'by pressing ESC';
+		} else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
+			return 'by clicking on a backdrop';
+		} else {
+			return `with: ${reason}`;
+		}
+	}
+
+  onSubmit() {
+    const taskNum = this.settingsForm.value.numberOfTasks;
+    if (taskNum > 0 && taskNum <= 10) {
+      this.showColor = this.settingsForm.value.showColor;
+      this.numOfTasks = taskNum;
+
+      localStorage.setItem('chartSettings', JSON.stringify({ showColor: this.showColor, numOfTasks: this.numOfTasks }));
+      this.ngOnInit();
+
+      Swal.fire({
+        title: "Success",
+        text: "Chart Updated!",
+        icon: "success",
+        showConfirmButton: false,
+        timer: 1500
+      });
+      this.modalRef.close('Save click');
+    }
+    else {
+      Swal.fire({
+        title: "Invalid Input",
+        text: "Number of Tasks has to be between 1 and 10",
+        icon: "error",
+        showConfirmButton: false,
+        timer: 1500
+      });
+    }
+  }
+
+  getChartSettings(key: string) {
+    const settings = localStorage.getItem('chartSettings');
+
+    if(!settings)
+      return key === "showColor" ? true : 3;
+    else {
+      const s = JSON.parse(settings);
+      return key === "showColor" ? s.showColor : s.numOfTasks;
+    }
   }
 
   initData() {
@@ -171,8 +252,8 @@ export class HomeComponent implements OnInit {
         this.allAgents = agents.values.length;
         this.activeAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentId)).length;
         this.inactiveAgents = agents.values.filter(u => u.isActive == false).length;
-
-        this.getTopXTasks(tasks.values, 3);
+      
+        this.getTopXTasks(tasks.values, this.numOfTasks);
       });
     });
 
@@ -235,7 +316,11 @@ export class HomeComponent implements OnInit {
     ]);
 
     const chartDom = document.getElementById('pcard');
-    const myChart = echarts.init(chartDom);
+    let myChart = echarts.getInstanceByDom(chartDom);
+    if (myChart) {
+      myChart.dispose();
+    }
+    myChart = echarts.init(chartDom);
     let option;
 
     option = {

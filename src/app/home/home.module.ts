@@ -5,8 +5,6 @@ import { DataTablesModule } from "angular-datatables";
 import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { NgModule } from "@angular/core";
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { MatGridListModule } from '@angular/material/grid-list';
 
 import { ComponentsModule } from "../shared/components.module";
 import { PipesModule } from "../shared/pipes.module";
@@ -32,8 +30,6 @@ import { ProgressBarComponent } from './dashboard/progress-bar/progress-bar.comp
     PipesModule,
     FormsModule,
     NgbModule,
-    DragDropModule,
-    MatGridListModule,
  ]
 })
 export class HomeModule {}

@@ -156,11 +156,47 @@
   <div class="row">
     <div class="col-md-5">
       <div class="card">
+        <fa-icon
+          placement="bottom"
+          container="body"
+          [icon]="faEdit"
+          aria-hidden="true"
+          style="align-self: end; position: relative; right:20px; top:20px"
+          (click)="openModal()"
+        />
         <app-progress-bar
-            [tasks]="topTasks">
-          </app-progress-bar>
+          [tasks]="topTasks">
+        </app-progress-bar>
+        <ng-template #chartSettings let-modal>
+          <div class="modal-header">
+            <h4 class="modal-title" id="modal-basic-title">Task Progress settings</h4>
+          </div>
+          <div class="modal-body" [formGroup]="settingsForm">
+            <div class="mb-3">
+              <label for="showColorCheckbox" class="form-check-label me-2">Show Task Color</label>
+              <input type="checkbox" [checked]="showColor" class="form-check-input" id="showColorCheckbox" formControlName="showColor">
+            </div>
+      
+            <div class="mb-3">
+              <label for="numberOfTasksInput" class="form-label">Amount of shown Tasks</label>
+              <input
+                type="number"
+                class="form-control"
+                id="numberOfTasksInput"
+                formControlName="numberOfTasks"
+                min="1"
+                max="10"
+              >
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-gray-600" (click)="modal.dismiss('Close click')">Close</button>
+            <button type="submit" class="btn btn-gray-600" (click)="onSubmit()">Save changes</button>
+          </div>
+        </ng-template>
       </div>
     </div>
+
       <div class="col-md-7">
         <div class="card ">
           <div class="card-header ">
