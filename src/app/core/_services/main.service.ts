@@ -1,5 +1,5 @@
+/* eslint-disable no-prototype-builtins */
 import { Observable, tap, retryWhen, delay, take, debounceTime } from 'rxjs';
-import { environment } from './../../../environments/environment';
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { AuthService } from './access/auth.service';
 import { HttpClient} from '@angular/common/http';
@@ -10,10 +10,11 @@ import { ConfigService } from './shared/config.service';
 @Injectable({
   providedIn: 'root'
 })
+
 export class GlobalService {
   constructor(
     private http: HttpClient,
-    @Inject(PLATFORM_ID) private platformId: Object,
+    @Inject(PLATFORM_ID) private platformId: object,
     private as:AuthService,
     private cs:ConfigService,
     ) { }
@@ -94,7 +95,7 @@ export class GlobalService {
     .pipe(
       debounceTime(2000)
     );
-  }
+  } 
 
 /**
  * Update agent information

@@ -18,9 +18,24 @@
             </fa-icon>
           </th>
       </tr>
+      <tr *ngIf="isFilterOpen">
+        <th class="rounded-start">
+          <input type="text" (keyup)='search($event,"id")' placeholder="ID"/>
+
+        </th>
+        <th>
+          <input type="text" (keyup)='search($event,"name")' placeholder="Name"/>
+        </th>
+        <th>
+          <input type="text" (keyup)='search($event,"user")' placeholder="Number of Users"/>
+        </th>
+        <th class="rounded-end">
+          
+        </th>
+    </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let a of Allgpg; let i = index">
+        <tr *ngFor="let a of filterData; let i = index">
             <td class="text-align:center">{{ a.id }}</td>
             <td class="text-align:center">{{ a.name | lowercase | titlecase }}</td>
             <td class="text-align:center">{{ a.user.length }}</td>

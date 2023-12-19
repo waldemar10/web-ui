@@ -75,19 +75,15 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
   tkeyspace: any;
   getchunks: any;
   getFiles: any;
+
   updateSelectedData(selectedData: any[]) {
     this.selectedData = new Set(selectedData);
-    /* this._changeDetectorRef.detectChanges(); */
     this.agentIds = selectedData.map(item => parseInt(item.split('-')[0]));
   }
   getSelectedDataArray(): any[] {
     return Array.from(this.selectedData);
   }
-  /* isRowHighlighted(rowId: string, rowName: string): string {
-    const uniqueKey = `${rowId}-${rowName.toUpperCase()}`;
-    const dataArray = Array.from(this.selectedData);
-    return dataArray.includes(uniqueKey) ? 'highlighted-row' : '';
-  } */
+
   ngOnInit() {
     this.getAgentsData();
     this.route.params
@@ -129,7 +125,17 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
       dom: 'Bfrtip',
       scrollY: "700px",
       scrollCollapse: true,
-      select:true,
+      select:{
+        style: 'multi',
+      },
+      columnDefs: [ { 
+        orderable: false, 
+        className: 'select-checkbox', 
+        targets: 0
+      } 
+      ],
+      order: [[1, 'asc']]
+      ,
       autoWidth: false,
         lengthMenu: [
           [10, 25, 50, -1],
@@ -144,14 +150,14 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
         },
         buttons: [
           {
-            text: 'Add selected agents',
+            text: 'Assign selected agents',
             
             action: (e, dt, button, config) => {
               const selectedRows = dt.rows({ selected: true }).data().toArray();
         
               selectedRows.forEach(row => {
-                const rowId = row[0];
-                const rowName = row[1].toUpperCase();
+                const rowId = row[1];
+                const rowName = row[2].toUpperCase();
                 const uniqueKey = `${rowId}-${rowName}`;
                 
                 if (this.selectedData.has(uniqueKey)) {
@@ -162,7 +168,9 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
                   this.selectedData.add(uniqueKey);
                 }
               });
+              // Update the selected data
               this.updateSelectedData(Array.from(this.selectedData));
+              // Assign agents to task (Allows multiple selection)
               this.assignAgents(this.editedTaskIndex);
             }
           },
@@ -275,7 +283,7 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
     return agents.filter(u => assing.findIndex(lu => lu.agentId === u.agentId) === -1);
 
   }
-
+  //Not used anymore
   asignAgents(){
     if (this.createForm.valid) {
       const payload = {"taskId": this.editedTaskIndex, "agentId":this.createForm.value['agentId']};
@@ -346,13 +354,16 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
   getNotAssignedToCurrentTaskAgents(agents:any){
   return agents.filter(u=> u.taskId !== this.editedTaskIndex)
   }
+  getTrustedAgents(agents:any){
+    return agents.filter(u=> u.isTrusted === true)
+  }
   getAgentsData() {
     const paramsAgent = {'maxResults': this.maxResults, 'expand':'accessGroups'}
+    const paramsAssign = {'expand':'agent'}
     const params = {'maxResults': this.maxResults};
     this.gs.getAll(SERV.AGENTS,paramsAgent).subscribe((agents: any) => {
-      this.gs.getAll(SERV.AGENT_ASSIGN,params).subscribe((agent_assign: any) => {
+      this.gs.getAll(SERV.AGENT_ASSIGN).subscribe((agent_assign: any) => {
         this.gs.getAll(SERV.TASKS,params).subscribe((tasks: any)=>{
-
             const agentsData = agents.values.map(agent => {
               const matchAgentWithAssignedAgent = agent_assign.values.find(assignedAgents => assignedAgents.agentId === agent.agentId)
               return { ...agent, ...matchAgentWithAssignedAgent}
@@ -361,9 +372,11 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
             this.showAgentsDataForTable = agentsData.map(mainObject => {
               const matchTaskWithAssignedAgent = tasks.values.find(e => e.taskId === mainObject.taskId)
               return { ...mainObject, ...matchTaskWithAssignedAgent}
-            })
+            }).filter(agent => agent !== null);
             this.showAgentsDataForTable = this.getNotAssignedToCurrentTaskAgents(this.showAgentsDataForTable);
-            
+            if(this.hashlistinform.isSecret === true){
+            this.showAgentsDataForTable = this.getTrustedAgents(this.showAgentsDataForTable);
+            }
             this.dtTrigger.next(void 0);
             
       })
@@ -490,7 +503,6 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
           text: self.chunkview === 0 ? 'Show All':'Show Latest 100',
           action: function () {
             if(self.chunkview === 0) {
-              console.log(id)
               self.router.navigate(['/tasks/show-tasks',id,'edit','show-all-chunks']);
             }
             if(self.chunkview === 1) {
@@ -582,7 +594,7 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
     })
     .then((result) => {
       if (result.isConfirmed) {
-        let payload = {"taskId":this.editedTaskIndex};
+        const payload = {"taskId":this.editedTaskIndex};
         this.gs.chelper(SERV.HELPER,'purgeTask',payload).subscribe(() => {
           Swal.fire({
             title: "Success",
@@ -609,7 +621,7 @@ export class EditTasksComponent implements OnInit,PendingChangesGuard {
   onReset(id: number, state: number){
     const path = state === 2 ? 'abortChunk' :'resetChunk' ;
     const title = state === 2 ? 'Chunk Abort!' :'Chunk Reset!' ;
-    let payload = {'chunkId': id};
+    const payload = {'chunkId': id};
     this.gs.chelper(SERV.HELPER,path,payload).subscribe(() => {
       Swal.fire({
         title: title,

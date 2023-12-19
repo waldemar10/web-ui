@@ -41,6 +41,7 @@ import { NewGlobalpermissionsgroupsComponent } from './globalpermissionsgroups/n
     FormsModule,
     PipesModule,
     NgbModule
-  ]
+  ],
+  bootstrap: [UsersComponent]
 })
 export class UsersModule {}

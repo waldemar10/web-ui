@@ -39,15 +39,15 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   dtOptions: any = {};
   isChecked =false;
 
-  isFilterOpen: boolean = false;
+  isFilterOpen = false;
   filteredAgents: any[] = [];
   
   //filter values
-  nameInput: string = "";
-  ownerInput: string = "";
-  hardwareInput: string = "";
-  statusInput: string = ""
-  accessGroupInput: string = "";
+  nameInput= "";
+  ownerInput = "";
+  hardwareInput = "";
+  statusInput = "";
+  accessGroupInput = "";
 
   public agroups: {accessGroupId: number, groupName: string, isEdit: false }[] = [];
 

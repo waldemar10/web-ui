@@ -25,7 +25,9 @@ export class GroupsComponent implements OnInit {
     faCancel=faCancel;
 
     private maxResults = environment.config.prodApiMaxResults;
-
+    isFilterOpen = false;
+    filterData: any = [];
+    selectedStatus: string | undefined = undefined;
     // Datatable
     @ViewChild(DataTableDirective, {static: false})
     dtElement: DataTableDirective;
@@ -47,9 +49,10 @@ export class GroupsComponent implements OnInit {
 
     loadAccessGroups(){
 
-      const params = {'maxResults': this.maxResults}
+      const params = {'expand': 'agentMembers'}
       this.gs.getAll(SERV.ACCESS_GROUPS,params).subscribe((agroups: any) => {
         this.agroups = agroups.values;
+        this.filterData = agroups.values;
         this.dtTrigger.next(void 0);
       });
       const self = this;
@@ -59,6 +62,11 @@ export class GroupsComponent implements OnInit {
         select: true,
         processing: true,  // Error loading
         deferRender: true,
+        bSortCellsTop: true,
+        ordering:false,
+        searching:false,
+        autoWidth:false,
+        bAutoWidth: false,
         destroy:true,
         buttons: {
           dom: {
@@ -111,11 +119,49 @@ export class GroupsComponent implements OnInit {
               },
                 'copy'
               ]
+            },
+            {
+              text:'Filter',
+              className:"btn-sm",
+              action: ( e, dt, node, config ) => {
+    
+                this.isFilterOpen = !this.isFilterOpen;
             }
+          }
           ],
         }
       };
 
+    }
+
+
+    previousSearchTerms: { [key: string]: string } = {};
+    
+    search(term: any, key: string) {
+      const searchTerm = (term.target as HTMLInputElement)?.value?.trim().toLowerCase() ?? '';
+    
+    
+      this.previousSearchTerms[key] = searchTerm;
+      if (searchTerm === '') {
+        delete this.previousSearchTerms[key];
+      }
+    
+      this.filterData = this.agroups.filter(x => {
+ 
+        const searchTermsMatch = Object.keys(this.previousSearchTerms).every(searchKey => {
+          const searchValue = this.previousSearchTerms[searchKey];
+          switch (searchKey) {
+            case 'id':
+              return x.accessGroupId === parseInt(searchValue, 10);
+            case 'groupName':
+              return x.groupName.trim().toLowerCase().includes(searchValue);
+            default:
+              return true; // Don't filter on unknown keys
+          }
+        });
+    
+        return searchTermsMatch;
+      });
     }
 
   onRefresh(){

@@ -59,10 +59,15 @@
                     id='hashlist'
                     class='form-select'
                     formControlName="hashlistId"
+                    
                 >
                 <option></option>
             </select>
+           
             </grid-form-input>
+           
+            <div *ngIf="needTrusted" class="alert alert-info" >Hashlist needs trusted agents</div>
+          
             <div class="form-group">
               <div class="form-outline form-input-custom">
                   <label class="form-label requiredak" for="getattackCmd">Command line</label>
@@ -301,6 +306,7 @@
               </ngb-panel>
             </ngb-accordion>
           <span *ngIf="!createForm.valid && createForm.touched" class="help-block" >Please complete all the form!</span><br>
+          <div class="alert alert-warning" *ngIf="notTrustedAgent">At least one agent is not trustworthy</div>
           <button-submit [name]="'Create'"></button-submit>
       </form>
     </grid-main>
@@ -485,17 +491,22 @@
         <span><b>Agents</b></span>
       </ng-template>
       <ng-template ngbPanelContent>
-        <table class="table-striped table-sm" datatable [dtOptions]="dtOptions">
-          <thead class="thead-light">
+        <table class="custom-table-light table-striped table-sm" datatable [dtOptions]="dtOptionsAgents">
+          <thead >
               <tr>
-                <th class="rounded-start">ID</th>
+                <th></th> 
+                <th>ID</th>
                 <th>Name</th>
                 <th>Assigned to</th>
-                <th class="rounded-end">Access Group</th>
+                <th>Access Group</th>
+                <th>Trusted Agent</th>
               </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let agent of showAgentsDataForTable" [class]="isRowHighlighted(agent.agentId,agent.agentName)">
+            <tr id="assign-agents-light" *ngFor="let agent of showAgentsDataForTable" [class]="agent.rowClass" >
+              <td>
+                
+              </td>
                 <td >
                   {{ agent.agentId }}
                 </td>
@@ -511,6 +522,9 @@
                 <div *ngFor="let group of agent.accessGroups">
                   {{group.groupName}}
                 </div>
+            </td>
+            <td>
+              {{agent.isTrusted}}
             </td>
             </tr>
           </tbody>

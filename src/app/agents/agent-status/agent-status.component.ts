@@ -86,19 +86,18 @@ export class AgentStatusComponent implements OnInit {
     return this.cookieService.getCookie('asview');
   }
 
-  get filteredAgents() {
-    return this._filteresAgents;
-  }
+    get filteredAgents() {
+      return this._filteresAgents;
+    }
 
-  set filteredAgents(value: any[]) {
-    this._filteresAgents = value;
-  }
+    set filteredAgents(value: any[]) {
+      this._filteresAgents = value;
+    }
 
   ngOnInit(): void {
     this.view = this.getView() || 0;
-    this.getAgentsPage(1);
     this.getAgentStats();
-
+    this.getAgentsPage(1);
     const self = this;
     this.dtOptions = {
       dom: 'Bfrtip',
@@ -184,14 +183,103 @@ export class AgentStatusComponent implements OnInit {
         
         
       }
+    
+    
   }
 
   onRefresh(){
     this.rerender();
-    this.ngOnInit();
+    /* this.ngOnInit(); */
   }
 
   rerender(): void {
+   /*  this.getAgentsPage(1); */
+   this.dtTrigger.next(void 0);
+    const self = this;
+    this.dtOptions = {
+      dom: 'Bfrtip',
+      bAutoWidth: true,
+      fixedHeader : false,
+      autoWidth: false,
+      bDestroy: true,
+      lengthMenu: [
+        [10, 25, 50, -1],
+        ['10 rows', '25 rows', '50 rows', 'Show all rows']
+      ],
+      pageLength: -1, 
+      order: [[0, 'desc']],
+      bStateSave:true,
+      select: {
+        style: 'multi',
+        },
+        buttons: {
+          dom: {
+            button: {
+              className: 'dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt',
+            }
+          },
+        buttons: [
+          {
+            text: '↻',
+            autoClose: true,
+            action: function (e, dt, node, config) {
+              self.onRefresh();
+            }
+          },
+          {
+            extend: 'collection',
+            text: 'Export',
+            buttons: [
+              {
+                extend: 'excelHtml5',
+                exportOptions: {
+                  columns: [0, 1, 2, 3, 4]
+                },
+              },
+              {
+                extend: 'print',
+                exportOptions: {
+                  columns: [0, 1, 2, 3, 4]
+                },
+                customize: function ( win ) {
+                  $(win.document.body)
+                      .css( 'font-size', '10pt' )
+                  $(win.document.body).find( 'table' )
+                      .addClass( 'compact' )
+                      .css( 'font-size', 'inherit' );
+               }
+              },
+              {
+                extend: 'csvHtml5',
+                exportOptions: {modifier: {selected: true}},
+                select: true,
+                customize: function (dt, csv) {
+                  let data = "";
+                  for (let i = 0; i < dt.length; i++) {
+                    data = "Agent Status\n\n"+  dt;
+                  }
+                  return data;
+               }
+              },
+                'copy'
+              ]
+            },
+            {
+              extend: 'colvis',
+              text: 'Column View',
+              columns: [ 1,2,3,4,5,6,7,8,9,10,11,12 ],
+              
+            },
+            {
+              extend: 'pageLength',
+              className: 'btn-sm',
+              titleAttr: 'Show number of rows',
+            },
+          ],
+        }
+        
+        
+      }
     this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
       // Destroy the table first
       dtInstance.destroy();
@@ -203,9 +291,9 @@ export class AgentStatusComponent implements OnInit {
   }
 
 
-  pageChanged(page: number) {
+  /* pageChanged(page: number) {
     this.getAgentsPage(page);
-  }
+  } */
 
   getAgentsPage(page: number) {
     const params = {'maxResults': this.maxResults};
@@ -213,7 +301,7 @@ export class AgentStatusComponent implements OnInit {
       this.gs.getAll(SERV.AGENT_ASSIGN,params).subscribe((assign: any) => {
         this.gs.getAll(SERV.TASKS,params).subscribe((t: any)=>{
           this.gs.getAll(SERV.CHUNKS,params).subscribe((c: any)=>{
-
+            
             const getAData = a.values.map(mainObject => {
               
               const matchObjectTask = assign.values.find(e => e.agentId === mainObject.agentId)
@@ -223,12 +311,10 @@ export class AgentStatusComponent implements OnInit {
             this.totalRecords = a.total;
             const jointasks = getAData.map(mainObject => {
               const matchObjectTask = t.values.find(e => e.taskId === mainObject.taskId)
-              /* console.log("A " +JSON.stringify(t.values));
-              console.log("COLOROOR: "+t.values[0].color) */
               return { ...mainObject, ...matchObjectTask}
             })
 
-
+            
             this.showagents = this.filteredAgents = jointasks.map(mainObject => {
             const matchObjectAgents = c.values.find(e => e.agentId === mainObject.agentId)
             

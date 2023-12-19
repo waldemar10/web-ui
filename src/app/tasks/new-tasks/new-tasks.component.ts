@@ -43,7 +43,7 @@ export class NewTasksComponent implements OnInit {
 
   dtTrigger: Subject<any> = new Subject<any>();
   dtOptions: any = {};
-
+  dtOptionsAgents: any = {};
   copyMode = false;
   copyFiles: any;
   editedIndex: number;
@@ -53,6 +53,9 @@ export class NewTasksComponent implements OnInit {
   crackertype: any;  // ToDo change to interface
   crackerversions: any = [];
   createForm: FormGroup;
+
+  needTrusted = false;
+  notTrustedAgent = false;
 
   showAgentsDataForTable: any = [];
   selectedData: Set<any> = new Set();
@@ -195,19 +198,28 @@ export class NewTasksComponent implements OnInit {
 
   updateSelectedData(selectedData: any[]) {
     this.selectedData = new Set(selectedData);
-    this._changeDetectorRef.detectChanges();
     this.agentIds = selectedData.map(item => parseInt(item.split('-')[0]));
+    this._changeDetectorRef.detectChanges();
   }
+
   getSelectedDataArray(): any[] {
     return Array.from(this.selectedData);
   }
-  isRowHighlighted(rowId: string, rowName: string): string {
-    const uniqueKey = `${rowId}-${rowName.toUpperCase()}`;
-    const dataArray = Array.from(this.selectedData);
-    return dataArray.includes(uniqueKey) ? 'highlighted-row' : '';
+
+  updateRowColors(selectedData: any): void {
+
+    const dataArray = Array.from(selectedData);
+ 
+    this.showAgentsDataForTable.forEach(agent => {
+      const cleanedAgentName = agent.agentName.replace(/\s/g, '');
+      const uniqueKey = `${agent.agentId}-${cleanedAgentName.toUpperCase()}`;
+
+      agent.rowClass = dataArray.includes(uniqueKey) ? 'highlighted-row' : '';
+    });
   }
+
   ngOnInit(): void {
-    this.getAgentsData();
+    
     this.fetchData(); 
     this.route.params
     .subscribe(
@@ -240,13 +252,54 @@ export class NewTasksComponent implements OnInit {
 
       }
     });
+    const self = this;
+    this.dtOptions = {
+      dom: 'Bfrtip',
+      scrollY: "700px",
+      scrollCollapse: true,
+      select: false,
+      autoWidth: false,
+      lengthMenu: [
+          [10, 25, 50, -1],
+          ['10 rows', '25 rows', '50 rows', 'Show all rows']
+        ],
+      pageLength: 10,
+      buttons: {
+        dom: {
+          button: {
+            className: 'dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt',
+          }
+        },
+        buttons: [
+          {
+            extend: 'pageLength',
+            className: 'btn-sm',
+            titleAttr: 'Show number of rows',
+          }
+        ]
+      }
+      
+    }
 
-  this.dtOptions = {
+
+  this.dtOptionsAgents = {
     dom: 'Bfrtip',
     scrollY: "700px",
     scrollCollapse: true,
-    select:true,
+    select:{
+      style: 'multi',
+    },
+    columnDefs: [ { 
+      orderable: false, 
+      className: 'select-checkbox', 
+      targets: 0
+    } 
+    ],
+    order: [[1, 'asc']]
+    ,
     autoWidth: false,
+    
+   
       lengthMenu: [
         [10, 25, 50, -1],
         ['10 rows', '25 rows', '50 rows', 'Show all rows']
@@ -265,19 +318,25 @@ export class NewTasksComponent implements OnInit {
             const selectedRows = dt.rows({ selected: true }).data().toArray();
       
             selectedRows.forEach(row => {
-              const rowId = row[0];
-              const rowName = row[1].toUpperCase();
+ 
+              const rowId = row[1];
+              const rowName = row[2].toUpperCase();
               const uniqueKey = `${rowId}-${rowName}`;
               
-              if (this.selectedData.has(uniqueKey)) {
-              
+              if (this.selectedData.has(uniqueKey)) 
+              {
                 this.selectedData.delete(uniqueKey);
-              } else {
-                
+              } 
+              else 
+              {
                 this.selectedData.add(uniqueKey);
               }
             });
+            
+            this.updateRowColors(this.selectedData);
             this.updateSelectedData(Array.from(this.selectedData));
+            this.checkIfAgentIsTrusted();
+            
           }
         },
         {
@@ -287,7 +346,9 @@ export class NewTasksComponent implements OnInit {
         }
       ]
     }
+    
   }
+    this.getAgentsData();
     this.createForm = new FormGroup({
       'taskName': new FormControl('', [Validators.required]),
       'notes': new FormControl(''),
@@ -427,7 +488,7 @@ export class NewTasksComponent implements OnInit {
         },
         load: function (query, callback) {
           if (self.copyMode && self.copyType === 0) {
-            let that = this;
+            const that = this;
             self.gs.get(SERV.TASKS,self.editedIndex,{'expand': 'hashlist'}).subscribe((result)=>{
               that.setValue(result.hashlist[0]['hashlistId']);
             })
@@ -451,13 +512,38 @@ export class NewTasksComponent implements OnInit {
     this.createForm.patchValue({
       color: value
     });
+
+    
     this._changeDetectorRef.detectChanges();
+  }
+
+  checkIsTrustedRequired(value: number): void{
+
+    const params = {'maxResults': this.maxResults};
+    this.needTrusted = false;
+    this.gs.getAll(SERV.HASHLISTS,params).subscribe((hlist: any) => {
+    
+    hlist.values.map(list => {
+
+      if(list.hashlistId == value && list.isSecret == true){
+      this.needTrusted = true;
+      this.checkIfAgentIsTrusted();
+      }
+      else 
+      if(list.hashlistId == value && list.isSecret == false){
+
+        this.needTrusted = false;
+        this.checkIfAgentIsTrusted();
+       }  
+      });
+    });
   }
 
   OnChangeHashlist(value){
     this.createForm.patchValue({
       hashlistId: Number(value)
     });
+    this.checkIsTrustedRequired(value);
     this._changeDetectorRef.detectChanges();
   }
 
@@ -469,8 +555,26 @@ export class NewTasksComponent implements OnInit {
       this.createForm.get('crackerBinaryTypeId').patchValue(lastItem);
     });
   }
+  checkIfAgentIsTrusted(){
+    if(this.needTrusted === true){
+    this.gs.getAll(SERV.AGENTS).subscribe((agents: any) => {
+
+    const notTrustedAgentFound = agents.values.some(agent => {
+      return (this.agentIds.includes(agent.agentId) && agent.isTrusted === false); 
+    });
+
+    this.notTrustedAgent = notTrustedAgentFound;
+    });
+  }
+  else
+  {
+    this.notTrustedAgent = false;
+  }
+  }
 
   onSubmit(){
+    
+    if(this.needTrusted === true && this.notTrustedAgent === false){
     if (this.createForm.valid) {     
       this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
         const taskId = response.taskId; //Get the current task id
@@ -485,6 +589,7 @@ export class NewTasksComponent implements OnInit {
         }
       );
     }
+  }
   }
 
   assignAgents(taskId: number){
@@ -643,4 +748,38 @@ export class NewTasksComponent implements OnInit {
     }
   }
 
+  onRefresh(){
+    this.rerender();
+    this.setdtOptionsAgents();
+    this.ngOnInit();
+  }
+  setdtOptionsAgents(){
+    this.dtOptionsAgents  = {
+      dom: 'Bfrtip',
+      scrollY: "700px",
+      scrollCollapse: true,
+      select: false,
+      autoWidth: false,
+      lengthMenu: [
+          [10, 25, 50, -1],
+          ['10 rows', '25 rows', '50 rows', 'Show all rows']
+        ],
+      pageLength: 10,
+      buttons: {
+        dom: {
+          button: {
+            className: 'dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt',
+          }
+        },
+        buttons: [
+          {
+            extend: 'pageLength',
+            className: 'btn-sm',
+            titleAttr: 'Show number of rows',
+          }
+        ]
+      }
+      
+    }
+  }
 }

@@ -1,7 +1,7 @@
 import {  faPencil, faEdit, faTrash, faLock, faFileImport, faFileExport, faPlus, faHomeAlt, faArchive, faCopy, faBookmark, faEye, faMicrochip, faCheckCircle, faTerminal, faNoteSticky } from '@fortawesome/free-solid-svg-icons';
 import { ModalDismissReasons, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { environment } from './../../../environments/environment';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild,ChangeDetectorRef, } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DataTableDirective } from 'angular-datatables';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
@@ -45,7 +45,8 @@ export class ShowTasksComponent implements OnInit {
   dtTrigger1: Subject<any> = new Subject<any>();
   dtOptions: any = {};
   dtOptions1: any = {};
-
+  dtOptionsWithFilter: any;
+  dtOptionsWithoutFilter: any;
   private updateSubscription: Subscription;
 
   ngOnDestroy(){
@@ -59,12 +60,15 @@ export class ShowTasksComponent implements OnInit {
   currenspeed = 0;
   filterData: any = [];
   data: any = [];
-  isAccordionOpen: boolean ;
-  selectedStatus: string;
+  isFilterOpen = false;
+  selectedStatus: string | undefined = undefined;
   selectedInfoPlus: string;
+  isFilterApplied = false
+  defaultStatus = '';
   private maxResults = environment.config.prodApiMaxResults;
 
   constructor(
+    private _changeDetectorRef: ChangeDetectorRef,
     private modalService: NgbModal,
     private route:ActivatedRoute,
     private gs: GlobalService,
@@ -99,6 +103,9 @@ export class ShowTasksComponent implements OnInit {
       bAutoWidth: false,
       order: [], // Removes the default order by id. We need it to sort by priority.
       pageLength: -1, 
+      bSortCellsTop: true,
+      ordering: false,
+      searching: false,
       lengthMenu: [
         [10, 25, 50, -1],
         ['10 rows', '25 rows', '50 rows', 'Show all rows']
@@ -220,7 +227,8 @@ export class ShowTasksComponent implements OnInit {
           text:'Filter',
           className:"btn-sm",
           action: ( e, dt, node, config ) => {
-            this.isAccordionOpen = !this.isAccordionOpen;
+
+            this.isFilterOpen = !this.isFilterOpen;
         }
       }
         ],
@@ -313,17 +321,17 @@ getTasks():void {
   this.gs.getAll(SERV.TASKS_WRAPPER,{'maxResults': this.maxResults}).subscribe((tw: any) => {
     this.gs.getAll(SERV.TASKS,params).subscribe((tasks: any) => {
       this.gs.getAll(SERV.HASHLISTS,{'maxResults': this.maxResults}).subscribe((h: any) => {
-      let filtersupert = tw.values.filter(u=> (u.taskType == 1 && u.isArchived === this.isArchived)); // Active SuperTasks
-      let supertasks = filtersupert.map(mainObject => {
+      const filtersupert = tw.values.filter(u=> (u.taskType == 1 && u.isArchived === this.isArchived)); // Active SuperTasks
+      const supertasks = filtersupert.map(mainObject => {
         const matchObject = h.values.find(element => element.hashlistId === mainObject.hashlistId );
         return { ...mainObject, ...matchObject }
       }) //Join Supertasks from TaskWrapper with Hashlist info
-      let mergeTasks = tasks.values.map(mainObject => {
+      const mergeTasks = tasks.values.map(mainObject => {
         const matchObject = tw.values.find(element => element.taskWrapperId === mainObject.taskWrapperId );
         return { ...mainObject, ...matchObject }
       }) // Join Tasks with Taskwrapper information for filtering
-      let filtertasks = mergeTasks.filter(u=> (u.taskType == 0 && u.isArchived === this.isArchived)); //Filter Active Tasks remove subtasks
-      let prepdata = filtertasks.concat(supertasks); // Join with supertasks
+      const filtertasks = mergeTasks.filter(u=> (u.taskType == 0 && u.isArchived === this.isArchived)); //Filter Active Tasks remove subtasks
+      const prepdata = filtertasks.concat(supertasks); // Join with supertasks
       //Order by Task Priority. filter exclude when is cracked && (a.keyspaceProgress < a.keyspace)
       this.alltasks = prepdata.sort((a, b) => Number(b.priority) - Number(a.priority));
       this.filterData = this.alltasks;
@@ -441,7 +449,7 @@ onDeleteBulk(){
   selectionnum.forEach(function (value) {
     Swal.fire('Deleting...'+sellen+' Task(s)...Please wait')
     Swal.showLoading()
-    let path = !search ? SERV.TASKS: SERV.TASKS_WRAPPER;
+    const path = !search ? SERV.TASKS: SERV.TASKS_WRAPPER;
     self.gs.delete(SERV.TASKS,value)
     .subscribe(
       err => {
@@ -463,7 +471,7 @@ onUpdateBulk(value: any){
     selectionnum.forEach(function (id) {
       Swal.fire('Updating...'+sellen+' Task(s)...Please wait')
       Swal.showLoading()
-      let path = !search ? SERV.TASKS: SERV.TASKS_WRAPPER;
+      const path = !search ? SERV.TASKS: SERV.TASKS_WRAPPER;
     self.gs.update(path, id, value).subscribe(
     );
   });

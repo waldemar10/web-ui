@@ -33,6 +33,9 @@ export class GlobalpermissionsgroupsComponent implements OnInit {
     dtTrigger: Subject<any> = new Subject<any>();
     dtOptions: any = {};
 
+    filterData: any = [];
+    selectedStatus: string | undefined = undefined;
+    isFilterOpen = false;
     public Allgpg: {id: number, name: string , user:[]}[] = [];
 
     constructor(
@@ -44,6 +47,7 @@ export class GlobalpermissionsgroupsComponent implements OnInit {
 
       const params = {'maxResults': this.maxResults , 'expand': 'user'}
       this.gs.getAll(SERV.ACCESS_PERMISSIONS_GROUPS,params).subscribe((gpg: any) => {
+        this.filterData = gpg.values;
         this.Allgpg = gpg.values;
         this.dtTrigger.next(void 0);
       });
@@ -54,6 +58,9 @@ export class GlobalpermissionsgroupsComponent implements OnInit {
         select: true,
         processing: true,  // Error loading
         deferRender: true,
+        bSortCellsTop: true,
+        ordering:false,
+        searching:false,
         destroy:true,
         buttons: {
           dom: {
@@ -105,13 +112,57 @@ export class GlobalpermissionsgroupsComponent implements OnInit {
                }
               },
                 'copy'
-              ]
+              ],
+              
+            },
+            {
+              text:'Filter',
+              className:"btn-sm",
+              action: ( e, dt, node, config ) => {
+    
+                this.isFilterOpen = !this.isFilterOpen;
             }
+          }
           ],
         }
       };
 
     }
+
+    previousSearchTerms: { [key: string]: string } = {};
+    
+    search(term: any, key: string) {
+      const searchTerm = (term.target as HTMLInputElement)?.value?.trim().toLowerCase() ?? '';
+    
+    
+      this.previousSearchTerms[key] = searchTerm;
+      if (searchTerm === '') {
+        delete this.previousSearchTerms[key];
+      }
+    
+      this.filterData = this.Allgpg.filter(x => {
+ 
+        const searchTermsMatch = Object.keys(this.previousSearchTerms).every(searchKey => {
+          const searchValue = this.previousSearchTerms[searchKey];
+          switch (searchKey) {
+            case 'id':
+              return x.id === parseInt(searchValue, 10);
+            case 'name':
+              return x.name.trim().toLowerCase().includes(searchValue);
+            case 'user':
+              return x.user.length === parseInt(searchValue, 10);
+            default:
+              return true; // Don't filter on unknown keys
+          }
+        });
+    
+        return searchTermsMatch;
+      });
+    }
+    
+   
+    
+
 
   onRefresh(){
     this.rerender();

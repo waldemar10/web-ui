@@ -359,17 +359,19 @@
           </grid-form-input>
           <button-submit (click)="asignAgents()" [name]="'Assign'"></button-submit>
         </form> -->
-        <table class="table-striped table-sm" datatable [dtOptions]="dtOptionsAssignAgents">
-          <thead class="thead-light">
+        <table class="custom-table-light table-striped table-sm" datatable [dtOptions]="dtOptionsAssignAgents">
+          <thead >
               <tr>
-                <th class="rounded-start">ID</th>
+                <th class="rounded-start"></th>
+                <th>ID</th>
                 <th>Name</th>
                 <th>Assigned to</th>
                 <th class="rounded-end">Access Group</th>
               </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let agent of showAgentsDataForTable" >
+            <tr id="assign-agents-light"  *ngFor="let agent of showAgentsDataForTable" [class]="agent.rowClass">
+              <td></td>
                 <td >
                   {{ agent.agentId }}
                 </td>
