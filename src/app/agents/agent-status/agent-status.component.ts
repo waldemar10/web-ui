@@ -61,6 +61,10 @@ export class AgentStatusComponent implements OnInit {
   dtTrigger: Subject<any> = new Subject<any>();
   dtOptions: any = {};
 
+  cpuTempWarnings;
+  cpuUtilWarnings;
+  deviceUtilWarnings;
+
   ngOnDestroy(): void {
     this.dtTrigger.unsubscribe();
   }
@@ -260,6 +264,25 @@ export class AgentStatusComponent implements OnInit {
       // this.statDevice = stats.values.filter(u=> u.statType == ASC.GPU_UTIL); // filter Device Utilization
       // this.statCpu = stats.values.filter(u=> u.statType == ASC.CPU_UTIL); // filter CPU utilization
     });
+    this.gs.getAll(SERV.AGENTS, paramsstat).subscribe((agent) => {
+      const cpuTempMap = agent.values.reduce((acc, agent) => {
+        acc[agent.agentId] = agent.cpuTemp;
+        return acc;
+      }, {});
+      this.cpuTempWarnings = cpuTempMap;
+
+      const cpuUtilMap = agent.values.reduce((acc, agent) => {
+        acc[agent.agentId] = agent.cpuUtil;
+        return acc;
+      }, {});
+      this.cpuUtilWarnings = cpuUtilMap;
+
+      const deviceUtilMap = agent.values.reduce((acc, agent) => {
+        acc[agent.agentId] = agent.deviceUtil;
+        return acc;
+      }, {});
+      this.deviceUtilWarnings = deviceUtilMap;
+    });
   }
 
   gettime(){
@@ -283,26 +306,20 @@ export class AgentStatusComponent implements OnInit {
   }
 
   // Modal Agent utilisation and OffCanvas menu
-
-  getTemp1(){  // Temperature Config Setting
-    return this.uiService.getUIsettings('agentTempThreshold1').value;
+  getCpuTemp(agent, index) {
+    const cpuTemp = this.cpuTempWarnings[agent.agentId].split(",").map(Number);
+    return cpuTemp[index];
   }
 
-  getTemp2(){  // Temperature 2 Config Setting
-    return this.uiService.getUIsettings('agentTempThreshold2').value;
+  getCpuUtil(agent, index) {
+    const cpuUtil = this.cpuUtilWarnings[agent.agentId].split(",").map(Number);
+    return cpuUtil[index];
   }
 
-  getUtil1(){  // CPU Config Setting
-    return this.uiService.getUIsettings('agentUtilThreshold1').value;
+  getDeviceUtil(agent, index) {
+    const deviceUtil = this.deviceUtilWarnings[agent.agentId].split(",").map(Number);
+    return deviceUtil[index];
   }
-
-  getUtil2(){  // CPU 2 Config Setting
-    return this.uiService.getUIsettings('agentUtilThreshold2').value;
-  }
-
-  openEnd(content: TemplateRef<any>) {
-		this.offcanvasService.open(content, { position: 'end' });
-	}
   
 onDelete(id: number){
       const swalWithBootstrapButtons = Swal.mixin({

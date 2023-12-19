@@ -11,7 +11,7 @@ import Swal from 'sweetalert2/dist/sweetalert2.js';
 import { CanvasRenderer } from 'echarts/renderers';
 import { LineChart } from 'echarts/charts';
 import * as echarts from 'echarts/core';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 
 import { UIConfigService } from 'src/app/core/_services/shared/storage.service';
 import { GlobalService } from 'src/app/core/_services/main.service';
@@ -86,16 +86,15 @@ export class EditAgentComponent implements OnInit {
       'ignoreErrors': new FormControl(''),
       'isTrusted': new FormControl(''),
 
-
-      'cpuTempHigh': new FormControl(''),
-      'cpuTempMid': new FormControl(''),
       'cpuTempLow': new FormControl(''),
-      'cpuUtilHigh': new FormControl(''),
-      'cpuUtilMid': new FormControl(''),
+      'cpuTempMid': new FormControl(''),
+      'cpuTempHigh': new FormControl(''),
       'cpuUtilLow': new FormControl(''),
-      'deviceUtilHigh': new FormControl(''),
-      'deviceUtilMid': new FormControl(''),
+      'cpuUtilMid': new FormControl(''),
+      'cpuUtilHigh': new FormControl(''),
       'deviceUtilLow': new FormControl(''),
+      'deviceUtilMid': new FormControl(''),
+      'deviceUtilHigh': new FormControl(''),
     });
 
     this.updateAssignForm = new FormGroup({
@@ -195,7 +194,8 @@ export class EditAgentComponent implements OnInit {
   onSubmit(){
     if (this.updateForm.valid) {
       this.onUpdateAssign(this.updateAssignForm.value);
-      this.gs.update(SERV.AGENTS,this.editedAgentIndex,this.updateForm.value).subscribe(() => {
+      const data = this.createTempSetting() ;
+      this.gs.update(SERV.AGENTS,this.editedAgentIndex,data).subscribe(() => {
           Swal.fire({
             title: "Success",
             text: "Agent updated!",
@@ -220,9 +220,33 @@ export class EditAgentComponent implements OnInit {
     }
   }
 
+  createTempSetting()  {
+    const data = this.updateForm.value;
+
+      const cpuTemp = `${data.cpuTempLow},${data.cpuTempMid},${data.cpuTempHigh}`;
+      const cpuUtil = `${data.cpuUtilLow},${data.cpuUtilMid},${data.cpuUtilHigh}`;
+      const deviceUtil = `${data.deviceUtilLow},${data.deviceUtilMid},${data.deviceUtilHigh}`;
+    
+      delete data.cpuTempLow;
+      delete data.cpuTempMid;
+      delete data.cpuTempHigh;
+      delete data.cpuUtilLow;
+      delete data.cpuUtilMid;
+      delete data.cpuUtilHigh;
+      delete data.deviceUtilLow;
+      delete data.deviceUtilMid;
+      delete data.deviceUtilHigh;
+
+      return {...data, cpuTemp: cpuTemp, cpuUtil: cpuUtil, deviceUtil: deviceUtil}
+  }
+
   private initForm() {
     if (this.editMode) {
       this.gs.get(SERV.AGENTS,this.editedAgentIndex).subscribe((result)=>{
+        const cpuTemp = result['cpuTemp'].split(",").map(Number);
+        const cpuUtil = result['cpuUtil'].split(",").map(Number);
+        const deviceUtil = result['deviceUtil'].split(",").map(Number);
+       
       this.updateForm = new FormGroup({
         'isActive': new FormControl(result['isActive'], [Validators.required]),
         'userId': new FormControl(result['userId']),
@@ -233,15 +257,15 @@ export class EditAgentComponent implements OnInit {
         'ignoreErrors': new FormControl(result['ignoreErrors']),
         'isTrusted': new FormControl(result['isTrusted']),
 
-        'cpuTempHigh': new FormControl(this.uiService.getUIsettings("agentTempThreshold2").value),
-        'cpuTempMid': new FormControl(this.uiService.getUIsettings("agentTempThreshold1").value),
-        'cpuTempLow': new FormControl(this.uiService.getUIsettings("agentTempThreshold1").value),
-        'cpuUtilHigh': new FormControl(this.uiService.getUIsettings("agentUtilThreshold2").value),
-        'cpuUtilMid': new FormControl(this.uiService.getUIsettings("agentUtilThreshold1").value),
-        'cpuUtilLow': new FormControl(this.uiService.getUIsettings("agentUtilThreshold1").value),
-        'deviceUtilHigh': new FormControl(this.uiService.getUIsettings("agentUtilThreshold2").value),
-        'deviceUtilMid': new FormControl(this.uiService.getUIsettings("agentUtilThreshold1").value),
-        'deviceUtilLow': new FormControl(this.uiService.getUIsettings("agentUtilThreshold1").value),
+        'cpuTempLow': new FormControl(cpuTemp[0]),
+        'cpuTempMid': new FormControl(cpuTemp[1]),
+        'cpuTempHigh': new FormControl(cpuTemp[2]),
+        'cpuUtilLow': new FormControl(cpuUtil[0]),
+        'cpuUtilMid': new FormControl(cpuUtil[1]),
+        'cpuUtilHigh': new FormControl(cpuUtil[2]),
+        'deviceUtilLow': new FormControl(deviceUtil[0]),
+        'deviceUtilMid': new FormControl(deviceUtil[1]),
+        'deviceUtilHigh': new FormControl(deviceUtil[2]),
       });
     });
     this.gs.getAll(SERV.AGENT_ASSIGN, {'filter':'agentId='+this.editedAgentIndex+''}).subscribe((assign: any) => {
@@ -265,7 +289,7 @@ export class EditAgentComponent implements OnInit {
   }
 
   // Temperature Graph
-getGraph(obj: object, status: number, name: string){
+async getGraph(obj: object, status: number, name: string){
 
   echarts.use([
     TitleComponent,
@@ -291,7 +315,8 @@ getGraph(obj: object, status: number, name: string){
   let templabel = '';
 
   if(ASC.GPU_TEMP === status){
-    if(this.getTemp2() > 100){ templabel = '°F'}else{ templabel = '°C'}
+    const temp2Value = await this.getTemp2();
+    if(temp2Value > 100){ templabel = '°F'}else{ templabel = '°C'}
   }
   if(ASC.GPU_UTIL === status){
     templabel = '%';
@@ -385,12 +410,16 @@ getGraph(obj: object, status: number, name: string){
   option && myChart.setOption(option);
  }
 
-getTemp1(){  // Temperature Config Setting
-  return this.uiService.getUIsettings('agentTempThreshold1').value;
- }
+ async getTemp1(): Promise<number> {
+  const result = await firstValueFrom(this.gs.get(SERV.AGENTS, this.editedAgentIndex));
+  const cpuTemp = result['cpuTemp'].split(",").map(Number);
+  return cpuTemp[0];
+}
 
-getTemp2(){  // Temperature 2 Config Setting
-  return this.uiService.getUIsettings('agentTempThreshold2').value;
+ async getTemp2(): Promise<number> {
+  const result = await firstValueFrom(this.gs.get(SERV.AGENTS, this.editedAgentIndex));
+  const cpuTemp = result['cpuTemp'].split(",").map(Number);
+  return cpuTemp[2];
 }
 
 transDate(dt){
