@@ -322,7 +322,7 @@ export class NewTasksComponent implements OnInit {
               const rowId = row[1];
               const rowName = row[2].toUpperCase();
               const uniqueKey = `${rowId}-${rowName}`;
-              
+       
               if (this.selectedData.has(uniqueKey)) 
               {
                 this.selectedData.delete(uniqueKey);
@@ -336,7 +336,7 @@ export class NewTasksComponent implements OnInit {
             this.updateRowColors(this.selectedData);
             this.updateSelectedData(Array.from(this.selectedData));
             this.checkIfAgentIsTrusted();
-            
+            dt.rows({ selected: true }).deselect();
           }
         },
         {
