@@ -1,79 +1,35 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import * as echarts from 'echarts';
+import { SecondsToTimePipe } from 'src/app/core/_pipes/secondsto-time.pipe';
 
 @Component({
   selector: 'app-progress-bar',
   templateUrl: './progress-bar.component.html',
-  styleUrls: ['./progress-bar.component.scss']
+  providers: [SecondsToTimePipe]
 })
-export class ProgressBarComponent implements OnInit {
+export class ProgressBarComponent implements OnInit, OnChanges {
 
-  @Input() hashes: any[];
-  @Input() chartTitle: string;
-
-  hashlistData: any = [
-    { name: "A", cracked: 3, hashes: 32 },
-    { name: "B", cracked: 10, hashes: 20 },
-    { name: "C", cracked: 30, hashes: 35 },
-    { name: "D", cracked: 25, hashes: 35 },
-  ]
-
-  superHashlistData: any = [
-    { name: "S-A", cracked: 13, hashes: 32 },
-    { name: "S-B", cracked: 8, hashes: 20 },
-    { name: "S-C", cracked: 27, hashes: 35 },
-    { name: "S-D", cracked: 5, hashes: 35 },
-  ]
+  @Input() tasks: any[];
+  showColor: boolean;
+ 
+  constructor(private secToTime: SecondsToTimePipe,) {}
 
   chart: any;
-  testData: any = this.getTopXHashes(this.hashlistData, 4);
 
-  getTopXHashes(arr: any[], x: number) {
-    arr.forEach((hash) => {
-      hash.progress = Math.floor((hash.cracked / hash.hashes) * 100)
-    });
-
-    const sortedArray = arr.sort((a, b) => a.progress - b.progress);
-
-    const topHashes = sortedArray.slice(0, Math.min(sortedArray.length, x));
-    console.log(topHashes);
-    return topHashes;
-  }
-
-  toggleChartData(event: any) {
-    //checked = false -> hashlists
-    const isChecked = (event.target as HTMLInputElement).checked;
-    
-    if(!isChecked){
-      this.testData = this.getTopXHashes(this.hashlistData, 3);
-    } else {
-      this.testData = this.getTopXHashes(this.superHashlistData, 4);
-    }
-
-    this.chart.setOption({
-      yAxis: [
-        {
-          data: this.testData.map((hash) => hash.name)
-        }
-      ],
-      series: [
-        {
-          data: this.testData.map((hash) => hash.progress),
-        }
-      ],
-    });
+  formatEstimatedTime(seconds: number): string {
+    return this.secToTime.transform(seconds);
   }
 
   ngOnInit() {
     this.chart = echarts.init(document.getElementById("progress-bar"));
     this.chart.setOption({
       title: {
-        text: 'Progress',
+        text: 'Tasks Progress',
         x: 'center'
       },
       yAxis: {
         type: 'category',
-        data: this.testData.map((hash) => hash.name),
+        data: this.tasks.map((task) => task.taskName),
       },
       xAxis: {
         type: 'value',
@@ -88,7 +44,13 @@ export class ProgressBarComponent implements OnInit {
       },
       series: [
         {
-          data: this.testData.map((hash) => hash.progress),
+          data: this.tasks.map((task) => ({
+            value: task.progress,
+            itemStyle: this.showColor ? {
+              color: task.color
+            }: { }, 
+            estimated: task.remainingTime,
+          })),
           type: 'bar',
           showBackground: true,
           backgroundStyle: {
@@ -97,7 +59,48 @@ export class ProgressBarComponent implements OnInit {
         }
       ],
       tooltip: {
-        formatter: '{b}: {c}%',
+        formatter: (params) => {
+            const task = params.data;
+            return `${params.name} Progress: ${task.value}% <br> Estimated Time: ${this.formatEstimatedTime(task.estimated)}`;
+        },
+      },
+    });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if(changes['tasks'])
+    {
+      this.tasks = changes['tasks'].currentValue;
+    }
+
+    const settings = localStorage.getItem('chartSettings');
+    this.showColor = JSON.parse(settings).showColor;
+    this.updateData();
+  }
+
+  private updateData(): void { 
+    this.chart.setOption({
+      series: [
+        {
+          data: this.tasks.map((task) => ({
+            value: task.progress,
+            itemStyle: this.showColor ? {
+              color: task.color
+            }: { }, 
+            estimated: task.remainingTime,
+          })),
+        },
+      ],
+      yAxis: [
+        {
+          data: this.tasks.map((task) => task.taskName),
+        }
+      ],
+      tooltip: {
+        formatter: (params) => {
+            const task = params.data;
+            return `${params.name} Progress: ${task.value}% <br> Estimated Time: ${this.formatEstimatedTime(task.estimated)}`;
+        },
       },
     });
   }

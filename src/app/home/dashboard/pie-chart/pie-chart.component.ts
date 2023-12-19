@@ -6,8 +6,8 @@ import * as echarts from 'echarts';
   templateUrl: './pie-chart.component.html'
 })
 export class PieChartComponent implements OnInit {
-  @Input() public availableAgents: number;
-  @Input() public unavailableAgents: number;
+  @Input() public activeAgents: number;
+  @Input() public inactiveAgents: number;
   @Input() public workingAgents: number;
 
   chart: any;
@@ -37,8 +37,8 @@ export class PieChartComponent implements OnInit {
           },
           data: [
             { value: this.workingAgents, name: 'Working Agents' },
-            { value: this.availableAgents, name: 'Available Agents' },
-            { value: this.unavailableAgents, name: 'Unavailable Agents' }
+            { value: this.activeAgents, name: 'Active Agents', itemStyle: {color: "green"} },
+            { value: this.inactiveAgents, name: 'Inactive Agents', itemStyle: {color: "darkorange"} }
           ],
           itemStyle: {
             emphasis: {
@@ -58,13 +58,13 @@ export class PieChartComponent implements OnInit {
     {
       this.workingAgents = changes['workingAgents'].currentValue;
     }
-    if(changes['availableAgents'])
+    if(changes['activeAgents'])
     {
-      this.availableAgents = changes['availableAgents'].currentValue;
+      this.activeAgents = changes['activeAgents'].currentValue;
     }
-    if(changes['unavailableAgents'])
+    if(changes['inactiveAgents'])
     {
-      this.unavailableAgents = changes['unavailableAgents'].currentValue;
+      this.inactiveAgents = changes['inactiveAgents'].currentValue;
     }
    
     this.updateData()
@@ -75,9 +75,9 @@ export class PieChartComponent implements OnInit {
       series: [
         {
           data: [
-            { value: this.workingAgents, name: 'Active Agents' },
-            { value: this.availableAgents, name: 'Available Agents' },
-            { value: this.unavailableAgents, name: 'Unavailable Agents' }
+            { value: this.workingAgents, name: 'Working Agents' },
+            { value: this.activeAgents, name: 'Active Agents', itemStyle: {color: "green"}, },
+            { value: this.inactiveAgents, name: 'Inactive Agents', itemStyle: {color: "darkorange"} }
           ],
         },
       ],

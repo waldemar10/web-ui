@@ -1,10 +1,10 @@
-import { faRefresh, faPauseCircle, faInfoCircle, faUserSecret, faTasks, faTasksAlt, faChainBroken, faCalendarWeek, faCalendarDay, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faRefresh, faPauseCircle, faInfoCircle, faUserSecret, faTasks, faTasksAlt, faChainBroken, faCalendarWeek, faCalendarDay, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { TitleComponent, CalendarComponent, TooltipComponent, VisualMapComponent } from 'echarts/components';
-import { Component, ElementRef, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { environment } from 'src/environments/environment';
 import { CanvasRenderer } from 'echarts/renderers';
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, forkJoin } from 'rxjs';
 import { HeatmapChart } from 'echarts/charts';
 import * as echarts from 'echarts/core';
 
@@ -13,39 +13,17 @@ import { PageTitle } from 'src/app/core/_decorators/autotitle';
 import { SERV } from '../core/_services/main.config';
 import { CookieService } from '../core/_services/shared/cookies.service';
 
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { ModalDismissReasons, NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
+import { FormControl, FormGroup } from '@angular/forms';
+import Swal from 'sweetalert2/dist/sweetalert2.js';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styles: [
-    `
-      .grid-container {
-        display: grid;
-        grid-template-columns: repeat(3, 425px);
-        grid-gap: 10px;
-      }
-
-      .grid-item {
-        background-color: #ececec;
-        padding: 10px;
-        text-align: center;
-        border: 1px solid #ccc;
-        width: 425px;
-      }
-    `,
-  ]
 })
 @PageTitle(['Dashboard'])
 export class HomeComponent implements OnInit {
-
-  tiles = ['Tile 1', 'Tile 2', 'Tile 3', 'Tile 4', 'Tile 5', 'Tile 6', 'Tile 7', 'Tile 8', 'Tile 9'];
-
-  drop(event: CdkDragDrop<string[]>) {
-    
-    console.log(event)
-    moveItemInArray(this.tiles, event.previousIndex, event.currentIndex);
-  }
+  @ViewChild('chartSettings') modal: any;
 
   username = 'Admin';
 
@@ -59,6 +37,7 @@ export class HomeComponent implements OnInit {
   faTasksAlt=faTasksAlt;
   faRefresh=faRefresh;
   faTasks=faTasks;
+  faEdit=faEdit;
 
   faGithub=faGithub;
 
@@ -67,14 +46,15 @@ export class HomeComponent implements OnInit {
   }
 
   // Dashboard variables
-  availableAgents = 0;
-  unavailableAgents = 0;
+  activeAgents = 0;
+  inactiveAgents = 0;
   workingAgents = 0;
   allAgents = 0;
   totalTasks = 0;
   totalCracks = 0;
   allsupertasks = 0;
-  allHashes;
+
+  topTasks: any = [];
 
   private maxResults = environment.config.prodApiMaxResults;
   storedAutorefresh: any =[]
@@ -82,12 +62,24 @@ export class HomeComponent implements OnInit {
   public punchCardOpts = {}
   public punchCardOptss = {}
 
+  settingsForm: FormGroup;
+  numOfTasks = this.getChartSettings("numOfTasks");
+  showColor = this.getChartSettings("showColor");
+
   constructor(
     private gs: GlobalService,
-    private cs: CookieService
-  ) { }
+    private cs: CookieService,
+    private modalService: NgbModal,
+  ) {}
+
+  private modalRef: NgbModalRef;
 
   ngOnInit(): void {
+
+    this.settingsForm = new FormGroup({
+      showColor: new FormControl(this.showColor),
+      numberOfTasks: new FormControl(this.numOfTasks),
+  });
 
     this.initData();
     this.storedAutorefresh = this.getAutoreload();
@@ -121,17 +113,125 @@ export class HomeComponent implements OnInit {
 
   getWorkingAgentIds(data: any): number[] {
     const filteredAgentIds: number[] = [];
-  
     if (data.length > 0) {
       data.forEach(task => {
         task.assignedAgents.forEach(agent => {
-          if (agent.keyspaceProgress < task.keyspace && task.keyspace !== 0) {
+          if (task.progress !== 100 && agent.isActive) {
             filteredAgentIds.push(agent._id);
           }
         });
       });
     }
     return filteredAgentIds;
+  }  
+
+  timeCalc(chunks, task) {
+    let cprogress = [];
+    let timespent = [];
+    const current = 0;
+  
+    for (let i = 0; i < chunks.length; i++) {
+      cprogress.push(chunks[i].checkpoint - chunks[i].skip);
+      if (chunks[i].dispatchTime > current) {
+        timespent.push(chunks[i].solveTime - chunks[i].dispatchTime);
+      } else if (chunks[i].solveTime > current) {
+        timespent.push(chunks[i].solveTime - current);
+      }
+    }
+  
+    const totalCProgress = cprogress.reduce((a, i) => a + i, 0);
+    const totalTimespent = timespent.reduce((a, i) => a + i, 0);
+  
+    if (totalCProgress !== 0 && totalTimespent !== 0 && task.keyspace !== 0) {
+      const estimated = (totalTimespent / (totalCProgress / task.keyspace) - totalTimespent);
+      task.remainingTime = estimated;
+      task.progress = parseFloat((totalCProgress / task.keyspace * 100).toFixed(2));
+    } else {
+      task.remainingTime = "N/A";
+      task.progress = 0; 
+    }
+  }
+  
+  getTopXTasks(arr: any[], x: number) {
+    const observables = arr.map(task => {
+      return this.gs.getAll(SERV.CHUNKS, {'maxResults': this.maxResults, 'filter': 'taskId=' + task.taskId + ''});
+    });
+    
+    //Makes sure all async calls are completed
+    forkJoin(observables).subscribe((results: any[]) => {
+      results.forEach((result, index) => {
+        this.timeCalc(result.values, arr[index]);
+      });
+      
+      const sortedArray = arr.filter(task => task.progress >= 0 && task.progress < 100);
+      sortedArray.sort((a, b) => a.progress - b.progress);
+      this.topTasks = sortedArray.slice(0, Math.min(sortedArray.length, x));
+    });
+  }
+
+  //Progressbar settings
+  closeResult = '';
+  openModal() {
+    this.modalRef = this.modalService.open(this.modal, { centered: true });
+
+    this.modalRef.result.then(
+      (result) => {
+        this.closeResult = `Closed with: ${result}`;
+      },
+      (reason) => {
+        this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
+      }
+    );
+  }
+
+  private getDismissReason(reason: any): string {
+		if (reason === ModalDismissReasons.ESC) {
+			return 'by pressing ESC';
+		} else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
+			return 'by clicking on a backdrop';
+		} else {
+			return `with: ${reason}`;
+		}
+	}
+
+  onSubmit() {
+    const taskNum = this.settingsForm.value.numberOfTasks;
+    if (taskNum > 0 && taskNum <= 10) {
+      this.showColor = this.settingsForm.value.showColor;
+      this.numOfTasks = taskNum;
+
+      localStorage.setItem('chartSettings', JSON.stringify({ showColor: this.showColor, numOfTasks: this.numOfTasks }));
+      this.ngOnInit();
+
+      Swal.fire({
+        title: "Success",
+        text: "Chart Updated!",
+        icon: "success",
+        showConfirmButton: false,
+        timer: 1500
+      });
+      this.modalRef.close('Save click');
+    }
+    else {
+      Swal.fire({
+        title: "Invalid Input",
+        text: "Number of Tasks has to be between 1 and 10",
+        icon: "error",
+        showConfirmButton: false,
+        timer: 1500
+      });
+    }
+  }
+
+  getChartSettings(key: string) {
+    const settings = localStorage.getItem('chartSettings');
+
+    if(!settings)
+      return key === "showColor" ? true : 3;
+    else {
+      const s = JSON.parse(settings);
+      return key === "showColor" ? s.showColor : s.numOfTasks;
+    }
   }
 
   initData() {
@@ -143,34 +243,24 @@ export class HomeComponent implements OnInit {
     this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
       this.gs.getAll(SERV.TASKS,paramst).subscribe((tasks: any) => {
         let tempWorkingAgents;
+        let unArchivedTasks = tasks.values.filter(u=> u.isArchived != true)
 
-        this.totalTasks = tasks.values.filter(u=> u.isArchived != true).length;
-        tempWorkingAgents = this.getWorkingAgentIds(tasks.values);
+        this.totalTasks = unArchivedTasks.length;
+        tempWorkingAgents = this.getWorkingAgentIds(unArchivedTasks);
         this.workingAgents = tempWorkingAgents.length;
 
         this.allAgents = agents.values.length;
-        this.availableAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentsId)).length;
-        this.unavailableAgents = agents.values.filter(u=> u.isActive == false).length;
-      });
-    });
-    
-    const paramst1 = {'maxResults': this.maxResults }
-    this.gs.getAll(SERV.TASKS_WRAPPER,paramst1).subscribe((wrapper: any) => {
+        this.activeAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentId)).length;
+        this.inactiveAgents = agents.values.filter(u => u.isActive == false).length;
       
-      console.log(wrapper);
+        this.getTopXTasks(tasks.values, this.numOfTasks);
+      });
     });
 
     // SuperTasks
     this.gs.getAll(SERV.SUPER_TASKS,params).subscribe((stasks: any) => {
       this.allsupertasks = stasks.total | 0;
     });
-
-    // Hashlists
-    const paramsHashes = {'maxResults': this.maxResults, 'expand': 'hashType,accessGroup', 'filter': 'isArchived='+false+''}
-
-    this.gs.getAll(SERV.HASHLISTS, paramsHashes).subscribe((hashes: any) => {
-      this.allHashes = hashes.values;
-    })
     	
     // Cracks
     const paramsCracked = {'maxResults': this.maxResults }
@@ -226,7 +316,11 @@ export class HomeComponent implements OnInit {
     ]);
 
     const chartDom = document.getElementById('pcard');
-    const myChart = echarts.init(chartDom);
+    let myChart = echarts.getInstanceByDom(chartDom);
+    if (myChart) {
+      myChart.dispose();
+    }
+    myChart = echarts.init(chartDom);
     let option;
 
     option = {
