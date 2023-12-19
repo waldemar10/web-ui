@@ -48,7 +48,63 @@
         <option *ngFor="let cv of crackerversions; let first" [ngValue]="cv.crackerBinaryId" >{{ cv.version }}</option> //[selected]="first"
       </select>
     </grid-form-input>
+    <div class="form-group my-3">
+      <span style="color:red">*</span>Select Agents
+      <div class="my-2">
+        <button type="button" class="btn btn-gray-800 btn-sm me-2" (click)="selectAll()">Select All</button>
+        <button type="button" class="btn btn-gray-800 btn-sm me-2" (click)="selectInactive()">Select Inactive</button>
+        <button type="button" class="btn btn-gray-800 btn-sm" (click)="deselectAll()">Deselect All</button>
+      </div>
+      <input
+        type="text"
+        name="agentIds"
+        class="form-control"
+        placeholder="Search agents..."
+        [(ngModel)]="agentInput"
+        [ngModelOptions]="{standalone: true}"
+        (input)="onInput()"
+      />
+      <div class="border rounded" style="max-height: 300px; overflow-y: auto">
+        <div *ngFor="let agent of filteredAgents" class="m-1 d-flex justify-content-between align-items-stretch"
+          style="border-bottom: dashed 1px grey; padding-bottom: 3px !important;">
+          <input type="checkbox" [checked]="agent.selected" class="me-2" [style.cursor]="'pointer'" (change)="selectAgent(agent)"/>
+          <span [routerLink]="['/agents/agent-status', agent.agentId, 'edit']" [style.cursor]="'pointer'">{{ agent.agentName }}</span>
+          <span *ngIf="agent.isActive === true" class="badge my-0" style="background-color: green;">
+            Active
+          </span>
+          <span *ngIf="agent.isActive === false" class="badge my-0" style="background-color: rgba(255, 136, 0, 0.87);">
+            Inactive
+          </span>
+        </div>
+      </div> 
+    </div>    
     <button-submit [name]="'Create'"></button-submit>
+    <ngb-accordion #acc="ngbAccordion" class="mt-3">
+      <ngb-panel>
+        <ng-template ngbPanelTitle>
+          <span>Not Eligible Agents 
+            <fa-icon
+            placement="bottom"
+            title="These agents haven't sent updates, likely not running or connected."
+            [icon]="faInfoCircle"
+            />
+          </span>
+        </ng-template>
+        <ng-template ngbPanelContent>
+          <div *ngFor="let agent of agents_notEligible" class="m-1 d-flex justify-content-between align-items-stretch"
+            style="border-bottom: dashed 1px grey; padding-bottom: 3px !important;">
+            <span [routerLink]="['/agents/agent-status', agent.agentId, 'edit']" [style.cursor]="'pointer'">{{ agent.agentName }}</span>
+            <span><b>IP:</b>{{ agent.lastIp }}</span>
+            <span *ngIf="agent.isActive === true" class="badge my-0" style="background-color: green;">
+              Active
+            </span>
+            <span *ngIf="agent.isActive === false" class="badge my-0" style="background-color: rgba(255, 136, 0, 0.87);">
+              Inactive
+            </span>
+          </div>
+        </ng-template>
+      </ngb-panel>
+    </ngb-accordion>
   </div>
   </form>
 </grid-main>

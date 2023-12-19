@@ -16,7 +16,7 @@
           <td class="text-align:center">{{ h.healthCheckId }}</td>
           <td>{{ h.time | uiDate }}</td>
           <td>Brute-Force ({{ h.description }})</td>
-          <td>{{ h.status | HCstatus | lowercase | titlecase }}</td>
+          <td [style.color]="getColor(h.status)"><span [routerLink]="[h.healthCheckId,'edit']" [style.cursor]="'pointer'">{{ h.status | HCstatus | lowercase | titlecase }}</span></td>
           <td class="overflow-hidden">
             <app-button-actions>
               <button ngbDropdownItem [routerLink]="[h.healthCheckId,'edit']" data-placement="top" title="Edit">
