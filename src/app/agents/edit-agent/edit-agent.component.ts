@@ -240,12 +240,31 @@ export class EditAgentComponent implements OnInit {
       return {...data, cpuTemp: cpuTemp, cpuUtil: cpuUtil, deviceUtil: deviceUtil}
   }
 
+  getConfigItem(key: String) {
+    const config = JSON.parse(localStorage.getItem("uis"));
+    const value = config.find(item => item.name === key).value;
+    return parseInt(value);
+  }
+
   private initForm() {
     if (this.editMode) {
       this.gs.get(SERV.AGENTS,this.editedAgentIndex).subscribe((result)=>{
-        const cpuTemp = result['cpuTemp'].split(",").map(Number);
-        const cpuUtil = result['cpuUtil'].split(",").map(Number);
-        const deviceUtil = result['deviceUtil'].split(",").map(Number);
+        const t1 = this.getConfigItem("agentTempThreshold1");
+        const t2 = this.getConfigItem("agentTempThreshold2");
+        const u1 = this.getConfigItem("agentUtilThreshold1");
+        const u2 = this.getConfigItem("agentUtilThreshold2");    
+
+        const cpuTemp = result['cpuTemp'] ? 
+                        result['cpuTemp'].split(",").map(Number) : 
+                        [Math.max(0, t1 - 10), t1, t2];
+
+        const cpuUtil = result["cpuUtil"] ? 
+                        result['cpuUtil'].split(",").map(Number) : 
+                        [Math.max(0, u2 - 10), u2, u1];
+        
+        const deviceUtil = result["deviceUtil"] ? 
+                        result['deviceUtil'].split(",").map(Number) : 
+                        [Math.max(0, u2 - 10), u2, u1];
        
       this.updateForm = new FormGroup({
         'isActive': new FormControl(result['isActive'], [Validators.required]),
@@ -411,14 +430,22 @@ async getGraph(obj: object, status: number, name: string){
  }
 
  async getTemp1(): Promise<number> {
+  const t1 = this.getConfigItem("agentTempThreshold1");
+  const t2 = this.getConfigItem("agentTempThreshold2");
   const result = await firstValueFrom(this.gs.get(SERV.AGENTS, this.editedAgentIndex));
-  const cpuTemp = result['cpuTemp'].split(",").map(Number);
+  const cpuTemp = result['cpuTemp'] ? 
+                        result['cpuTemp'].split(",").map(Number) : 
+                        [Math.max(0, t1 - 10), t1, t2];
   return cpuTemp[0];
 }
 
  async getTemp2(): Promise<number> {
+  const t1 = this.getConfigItem("agentTempThreshold1");
+  const t2 = this.getConfigItem("agentTempThreshold2");
   const result = await firstValueFrom(this.gs.get(SERV.AGENTS, this.editedAgentIndex));
-  const cpuTemp = result['cpuTemp'].split(",").map(Number);
+  const cpuTemp = result['cpuTemp'] ? 
+                        result['cpuTemp'].split(",").map(Number) : 
+                        [Math.max(0, t1 - 10), t1, t2];
   return cpuTemp[2];
 }
 

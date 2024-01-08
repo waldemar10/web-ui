@@ -351,6 +351,7 @@ export class AgentStatusComponent implements OnInit {
       // this.statCpu = stats.values.filter(u=> u.statType == ASC.CPU_UTIL); // filter CPU utilization
     });
     this.gs.getAll(SERV.AGENTS, paramsstat).subscribe((agent) => {
+      
       const cpuTempMap = agent.values.reduce((acc, agent) => {
         acc[agent.agentId] = agent.cpuTemp;
         return acc;
@@ -369,6 +370,12 @@ export class AgentStatusComponent implements OnInit {
       }, {});
       this.deviceUtilWarnings = deviceUtilMap;
     });
+  }
+
+  getConfigItem(key: String) {
+    const config = JSON.parse(localStorage.getItem("uis"));
+    const value = config.find(item => item.name === key).value;
+    return parseInt(value);
   }
 
   gettime(){
@@ -391,19 +398,41 @@ export class AgentStatusComponent implements OnInit {
     }
   }
 
+  getDefaultValues(type: String) {
+    const t1 = this.getConfigItem("agentTempThreshold1");
+    const t2 = this.getConfigItem("agentTempThreshold2");
+    const u1 = this.getConfigItem("agentUtilThreshold1");
+    const u2 = this.getConfigItem("agentUtilThreshold2");  
+
+    const defaultTempWarnings = [Math.max(0, t1 - 10), t1, t2];
+    const defaultUtilWarnings = [Math.max(0, u2 - 10), u2, u1];
+
+    if(type === "temp")
+      return defaultTempWarnings;
+    else
+      return defaultUtilWarnings;
+  }
+
   // Modal Agent utilisation and OffCanvas menu
   getCpuTemp(agent, index) {
-    const cpuTemp = this.cpuTempWarnings[agent.agentId].split(",").map(Number);
+    const cpuTemp = this.cpuTempWarnings[agent.agentId].length === 3 ? 
+                    this.cpuTempWarnings[agent.agentId].split(",").map(Number) :
+                    this.getDefaultValues("temp");
     return cpuTemp[index];
   }
 
   getCpuUtil(agent, index) {
-    const cpuUtil = this.cpuUtilWarnings[agent.agentId].split(",").map(Number);
+    const cpuUtil = this.cpuUtilWarnings[agent.agentId].length === 3 ?
+                    this.cpuUtilWarnings[agent.agentId].split(",").map(Number) :
+                    this.getDefaultValues("util");
+                    console.log(cpuUtil);
     return cpuUtil[index];
   }
 
   getDeviceUtil(agent, index) {
-    const deviceUtil = this.deviceUtilWarnings[agent.agentId].split(",").map(Number);
+    const deviceUtil = this.deviceUtilWarnings[agent.agentId].length === 3 ?
+                    this.deviceUtilWarnings[agent.agentId].split(",").map(Number) :
+                    this.getDefaultValues("util");
     return deviceUtil[index];
   }
   
