@@ -7,10 +7,9 @@
     </ng-template>
     <ng-template ngbPanelContent>
       <ol class="list-group list-group-numbered">
-        <li class="list-group-item">In clients, download the file and run it</li>
-        <li class="list-group-item">Generate voucher to link with agent (Used vouchers are automatically deleted)</li>
+        <li class="list-group-item">Download the Client and run the <b>__main__.py</b> file</li>
         <li class="list-group-item">
-          Using the URL, link the agent with the app:
+          Link the agent with the app by pasting this URL in the Client:
           <code>{{ agentURL }}</code>
           <fa-icon
                   class='btn-outline-gray-600 float-right'
@@ -20,12 +19,12 @@
                   container="body"
                   [icon]="faCopy"
                   aria-hidden="true"
-          >
-          </fa-icon>
+          />
         </li>
+        <li class="list-group-item">Generate a voucher to register the agent by pasting it in the Client (Used vouchers are automatically deleted)</li>
       </ol>
     </ng-template>
-  </ngb-panel>
+  </ngb-panel> 
 </ngb-accordion>
 <!-- Clients section -->
 <app-table>
