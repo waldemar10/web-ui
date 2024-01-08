@@ -425,7 +425,6 @@ export class AgentStatusComponent implements OnInit {
     const cpuUtil = this.cpuUtilWarnings[agent.agentId].length === 3 ?
                     this.cpuUtilWarnings[agent.agentId].split(",").map(Number) :
                     this.getDefaultValues("util");
-                    console.log(cpuUtil);
     return cpuUtil[index];
   }
 
