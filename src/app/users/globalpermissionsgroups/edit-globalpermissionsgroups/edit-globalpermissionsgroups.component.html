@@ -13,7 +13,7 @@
           <thead class="thead-light">
             <tr>
               <th class="rounded-start">ID</th>
-              <th class="rounded-end">Cracked</th>
+              <th class="rounded-end">User Name</th>
             </tr>
             </thead>
             <tbody>
@@ -93,6 +93,14 @@
                     </div>
                 </grid-form-input>
               </div>
+              <div class="col">
+                <grid-form-input [name]="'Shutdown'">
+                  <td>
+                    <div class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" formControlName="permAgentShutdown">
+                    </div>
+                </grid-form-input>
+              </div>
               <hr>
               <h5>Agent Stats</h5>
               <div class="col">
@@ -124,6 +132,14 @@
                   <td>
                     <div class="form-check form-switch">
                         <input type="checkbox" class="form-check-input" formControlName="permAgentStatUpdate">
+                    </div>
+                </grid-form-input>
+              </div>
+              <div class="col">
+                <grid-form-input [name]="'Shutdown'">
+                  <td>
+                    <div class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" formControlName="permAgentStatShutdown">
                     </div>
                 </grid-form-input>
               </div>

@@ -54,10 +54,12 @@ export class EditGlobalpermissionsgroupsComponent implements OnInit {
       'permAgentDelete': new FormControl(),
       'permAgentRead': new FormControl(),
       'permAgentUpdate': new FormControl(),
+      'permAgentShutdown': new FormControl(),
       'permAgentStatCreate': new FormControl(),
       'permAgentStatDelete': new FormControl(),
       'permAgentStatRead': new FormControl(),
       'permAgentStatUpdate': new FormControl(),
+      'permAgentStatShutdown': new FormControl(),
       'permRegVoucherCreate': new FormControl(),
       'permRegVoucherDelete': new FormControl(),
       'permRegVoucherRead': new FormControl(),
@@ -137,6 +139,7 @@ export class EditGlobalpermissionsgroupsComponent implements OnInit {
 
   onSubmit(){
     if (this.updateForm.valid) {
+      console.log(this.updateForm.value)
       this.gs.update(SERV.ACCESS_PERMISSIONS_GROUPS,this.editedGPGIndex, this.updateForm.value).subscribe(() => {
           Swal.fire({
             title: "Success",
@@ -165,10 +168,12 @@ export class EditGlobalpermissionsgroupsComponent implements OnInit {
         'permAgentDelete': new FormControl(result['permAgentDelete']),
         'permAgentRead': new FormControl(result['permAgentRead']),
         'permAgentUpdate': new FormControl(result['permAgentUpdate']),
+        'permAgentShutdown': new FormControl(result['permAgentShutdown']),
         'permAgentStatCreate': new FormControl(result['permAgentStatCreate']),
         'permAgentStatDelete': new FormControl(result['permAgentStatDelete']),
         'permAgentStatRead': new FormControl(result['permAgentStatRead']),
         'permAgentStatUpdate': new FormControl(result['permAgentStatUpdate']),
+        'permAgentStatShutdown': new FormControl(result['permAgentStatShutdown']),
         'permRegVoucherCreate': new FormControl(result['permRegVoucherCreate']),
         'permRegVoucherDelete': new FormControl(result['permRegVoucherDelete']),
         'permRegVoucherRead': new FormControl(result['permRegVoucherRead']),
@@ -255,10 +260,12 @@ export class EditGlobalpermissionsgroupsComponent implements OnInit {
         'permAgentDelete': this.selected,
         'permAgentRead': this.selected,
         'permAgentUpdate': this.selected,
+        'permAgentShutdown': this.selected,
         'permAgentStatCreate': this.selected,
         'permAgentStatDelete': this.selected,
         'permAgentStatRead': this.selected,
         'permAgentStatUpdate': this.selected,
+        'permAgentStatShutdown': this.selected,
         'permRegVoucherCreate': this.selected,
         'permRegVoucherDelete': this.selected,
         'permRegVoucherRead': this.selected,
