@@ -1,5 +1,5 @@
 import { faDigitalTachograph, faMicrochip, faHomeAlt, faPlus, faUserSecret,faEye, faTemperature0, faInfoCircle,
-   faServer, faUsers, faChevronDown, faLock, faPauseCircle, faTrash, faEdit, faTerminal, faFileText} from '@fortawesome/free-solid-svg-icons';
+   faServer, faUsers, faChevronDown, faLock, faPauseCircle, faTrash, faEdit, faTerminal, faFileText, faPowerOff} from '@fortawesome/free-solid-svg-icons';
 import { ModalDismissReasons, NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { DataTableDirective } from 'angular-datatables';
@@ -38,6 +38,7 @@ export class AgentStatusComponent implements OnInit {
   faLock=faLock;
   faEye=faEye;
 
+  faPowerOff=faPowerOff;
   faTrash=faTrash;
   faEdit=faEdit;
   faTerminal=faTerminal;
@@ -434,8 +435,44 @@ export class AgentStatusComponent implements OnInit {
                     this.getDefaultValues("util");
     return deviceUtil[index];
   }
+
+  onShutdownAgent(id){
+    const timestamp = Math.floor(Date.now() / 1000); //timestamp in seconds
+    const data = {timestamp: timestamp, agentIds: `${id}`}
+    if(!id) {
+      Swal.fire({
+        title: "You haven't selected any Agent",
+        icon: 'error',
+        timer: 1500,
+        showConfirmButton: false
+      })
+    } else {
+      this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
+        let title: String;
+        let iconType: String;
+        if (!res.error) {
+          title = "Shutdown command has been sent out";
+          iconType = "success";
+        } else {
+          title = res.error;
+          iconType = "error";
+        }
+        
+        Swal.fire({
+          title: title,
+          icon: iconType,
+          timer: 1500,
+          showConfirmButton: false
+        });
   
-onDelete(id: number){
+        this.ngOnInit();
+        this.rerender();
+      });
+    }
+    ;
+  }
+  
+  onDelete(id: number){
       const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
           confirmButton: 'btn',

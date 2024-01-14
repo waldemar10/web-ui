@@ -1,5 +1,5 @@
 
-import { faEdit, faLock, faPauseCircle,faHomeAlt, faPlus, faFileText, faTrash, faCheckCircle, faArrowCircleDown, faMicrochip, faTerminal} from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faLock, faPauseCircle,faHomeAlt, faPlus, faFileText, faTrash, faCheckCircle, faArrowCircleDown, faMicrochip, faTerminal, faPowerOff} from '@fortawesome/free-solid-svg-icons';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { DataTableDirective } from 'angular-datatables';
@@ -31,6 +31,7 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   faEdit=faEdit;
   faLock=faLock;
   faPlus=faPlus;
+  faPowerOff=faPowerOff;
 
   @ViewChild(DataTableDirective)
   dtElement: DataTableDirective;
@@ -193,6 +194,13 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
                   }
                 },
                 {
+                  text: 'Shutdown Agents',
+                  autoClose: true,
+                  action: function ( e, dt, node, config ) {
+                    self.shutdownAgents();
+                  }
+                },
+                {
                   text: 'Edit Rack',
                   autoClose: true,
                   action: function ( e, dt, node, config ) {
@@ -278,6 +286,80 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
     }
   }
 
+  onShutdownAgent(id){
+    const timestamp = Math.floor(Date.now() / 1000); //timestamp in seconds
+    const data = {timestamp: timestamp, agentIds: `${id}`}
+    if(!id) {
+      Swal.fire({
+        title: "You haven't selected any Agent",
+        icon: 'error',
+        timer: 1500,
+        showConfirmButton: false
+      })
+    } else {
+      this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
+        let title: String;
+        let iconType: String;
+        if (!res.error) {
+          title = "Shutdown command has been sent out";
+          iconType = "success";
+        } else {
+          title = res.error;
+          iconType = "error";
+        }
+        
+        Swal.fire({
+          title: title,
+          icon: iconType,
+          timer: 1500,
+          showConfirmButton: false
+        });
+  
+        this.ngOnInit();
+        this.rerender();
+      });
+    }
+    ;
+  }
+
+  shutdownAgents() {
+    const selectionnum = this.onSelectedAgents();
+    const agentIds = selectionnum.join(",");
+    const timestamp = Math.floor(Date.now() / 1000); //timestamp in seconds
+    const data = { timestamp: timestamp, agentIds: agentIds };
+    if (selectionnum.length == 0) {
+      Swal.fire({
+        title: "You haven't selected any Agent",
+        icon: 'error',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } else {
+      this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
+        let title: String;
+        let iconType: String;
+
+        if (!res.error) {
+          title = "Shutdown command has been sent out";
+          iconType = "success";
+        } else {
+          title = res.error;
+          iconType = "error";
+        }
+        
+        Swal.fire({
+          title: title,
+          icon: iconType,
+          timer: 1500,
+          showConfirmButton: false
+        });
+        
+        this.ngOnInit();
+        this.rerender();
+      });
+    }
+  }  
+
   rerender(): void {
     this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
       // Destroy the table first
@@ -296,7 +378,7 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       Swal.close();
       Swal.fire({
         title: 'Done!',
-        type: 'success',
+        icon: 'success',
         timer: 1500,
         showConfirmButton: false
       })
@@ -309,7 +391,7 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
     if(selection.length == 0) {
       Swal.fire({
         title: "You haven't selected any Agent",
-        type: 'success',
+        icon: 'error',
         timer: 1500,
         showConfirmButton: false
       })

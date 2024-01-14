@@ -504,7 +504,7 @@
               <hr *ngIf="showagents[i].accessGroups.length > 1">
             </div>
           </td>
-          <!--  ** EDIT & DELETE -->
+          <!--  ** EDIT & DELETE & SHUTDOWN -->
           <td class="overflow-hidden">
             <app-button-actions>
               <button ngbDropdownItem [routerLink]="[aa.agentId,'edit']" data-placement="top" title="Edit">
@@ -513,6 +513,10 @@
               <div class="dropdown-divider"></div>
               <button ngbDropdownItem data-toggle="tooltip" data-placement="top" title="Delete" (click)="onDelete(showagents[i].agentId)">
                 <fa-icon [icon]="faTrash" aria-hidden="true"></fa-icon> Delete
+              </button>
+              <div class="dropdown-divider"></div>
+              <button ngbDropdownItem data-toggle="tooltip" data-placement="top" title="Shutdown" (click)="onShutdownAgent(showagents[i].agentId)">
+                <fa-icon [icon]="faPowerOff" aria-hidden="true"></fa-icon> Shutdown
               </button>
             </app-button-actions>
           </td>

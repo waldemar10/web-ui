@@ -43,6 +43,7 @@ export class SERV {
   public static USERS = '/ui/users';
   // PROJECTS
   public static PROJECTS = '/ui/tasks';
-
+  // Commands
+  public static SHUTDOWN ='/ui/shutdown';
 }
 
