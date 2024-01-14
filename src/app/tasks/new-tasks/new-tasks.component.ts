@@ -589,6 +589,21 @@ export class NewTasksComponent implements OnInit {
         }
       );
     }
+  }else if (this.needTrusted === false){
+    if (this.createForm.valid) {     
+      this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
+        const taskId = response.taskId; //Get the current task id
+          Swal.fire({
+            title: "Success",
+            text: "New Task created!",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 1500
+          });
+          this.assignAgents(taskId);   
+        }
+      );
+    }
   }
   }
 

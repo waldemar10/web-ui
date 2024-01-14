@@ -109,6 +109,7 @@
             </div>
             <div class="col-md-4">
               <span *ngIf="task.keyspaceProgress >= task.keyspace && task.keyspaceProgress > 0" ngbTooltip="Completed"><fa-icon [icon]="faCheckCircle" aria-hidden="true"></fa-icon></span>
+              <span *ngIf="task.priority == 0"><fa-icon [icon]="faPause" aria-hidden="true"></fa-icon></span>
             </div>
           </div>
         </td>
@@ -187,6 +188,12 @@
               <button ngbDropdownItem (click)="onArchive((task.taskType === 0 ? task.taskId: task.taskWrapperId ),task.taskType)" data-toggle="tooltip" data-placement="top" title="Archive">
                 <fa-icon [icon]="faArchive" aria-hidden="true"></fa-icon> Archive
               </button>
+              <button ngbDropdownItem (click)="onPause(task)" data-toggle="tooltip" data-placement="top" title="Pause">
+                <fa-icon [icon]="faPause" aria-hidden="true"></fa-icon> Pause Task & Agent
+              </button>
+              <button ngbDropdownItem (click)="onStart(task)" data-toggle="tooltip" data-placement="top" title="Start">
+                <fa-icon [icon]="faPlay" aria-hidden="true"></fa-icon> Activate Task & Agent
+              </button>
               <div class="dropdown-divider"></div>
               <button ngbDropdownItem (click)="onDelete((task.taskType === 0 ? task.taskId: task.taskWrapperId ),task.taskType)" data-toggle="tooltip" data-placement="top" title="Delete">
                 <fa-icon [icon]="faTrash" aria-hidden="true"></fa-icon> Delete
@@ -206,6 +213,12 @@
               </button>
               <button ngbDropdownItem (click)="getSubtasks(task.taskWrapper, task.taskWrapperId)" data-toggle="tooltip" data-placement="top" title="Edit" *ngIf="task.taskType === 1">
                 <fa-icon [icon]="faEdit" aria-hidden="true"></fa-icon> Edit SubTasks
+              </button>
+              <button ngbDropdownItem (click)="onPause(task)" data-toggle="tooltip" data-placement="top" title="Pause">
+                <fa-icon [icon]="faPause" aria-hidden="true"></fa-icon> Pause Task & Agent
+              </button>
+              <button ngbDropdownItem (click)="onStart(task)" data-toggle="tooltip" data-placement="top" title="Start">
+                <fa-icon [icon]="faPlay" aria-hidden="true"></fa-icon> Activate Task & Agent
               </button>
               <div class="dropdown-divider"></div>
               <button ngbDropdownItem (click)="onDelete((task.taskType === 0 ? task.taskId: task.taskWrapperId ),task.taskType)" data-toggle="tooltip" data-placement="top" title="Delete">

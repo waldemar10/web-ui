@@ -1,0 +1,84 @@
+<!-- Body -->
+<app-page-title [title]="'Assign Access Group'" ></app-page-title>
+<app-table>
+  <div class="row g-3">
+    <div class="col-4">
+      <div style="width: 300px">
+        <select
+          class="form-select mb-2"
+          [(ngModel)]="selectedGroup"
+        >
+          <option [ngValue]="undefined" disabled>Select AccessGroup</option>
+          <option *ngFor="let group of filterData" [ngValue]="group">
+            {{ group.accessGroupId }} {{ group.groupName }}
+          </option>
+        </select>
+      </div>
+      <div class="m-1">
+        <p>Selected agents:</p>
+        <div *ngIf="selectedData.size !== 0">
+          {{ getSelectedDataArray().join(", ") }}
+        </div>
+        <div *ngIf="selectedData.size === 0">No Agents Selected</div>
+      </div>
+      <div class="d-flex mt-5">
+        <button
+          class="btn btn-success m-1"
+          data-toggle="tooltip"
+          data-placement="top"
+          title="Add the agent to the access group"
+          (click)="onAdd()"
+        >
+          Add
+        </button>
+        <button
+          class="btn btn-danger m-1"
+          data-toggle="tooltip"
+          data-placement="top"
+          title="Remove the agent from the access group"
+          (click)="onRemove()"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+
+    <div class="col-8">
+      <table
+        class="table table-striped table-sm"
+        datatable
+        [dtOptions]="dtOptionsAgents"
+        [dtTrigger]="dtTriggerAgents"
+      >
+        <thead class="thead-light">
+          <tr>
+            <th class="rounded-start"></th>
+            <th>ID</th>
+            <th>Name</th>
+            <th class="rounded-end">Access Group</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            id="assign-agents-light"
+            *ngFor="let agent of showAgentsDataForTable"
+            [class]="agent.rowClass"
+          >
+            <td></td>
+            <td>
+              {{ agent.agentId }}
+            </td>
+            <td>
+              {{ agent.agentName | shortenString : 15 | lowercase | titlecase }}
+            </td>
+            <td>
+              <div *ngFor="let group of agent.accessGroups">
+                {{ group.groupName }}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div></app-table
+>

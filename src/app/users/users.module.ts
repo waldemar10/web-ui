@@ -17,7 +17,7 @@ import { UsersRoutingModule } from "./users-routing.module";
 import { UsersComponent } from "./users.component";
 import { CUGroupComponent } from './groups/cu-group/cu-group.component';
 import { NewGlobalpermissionsgroupsComponent } from './globalpermissionsgroups/new-globalpermissionsgroups/new-globalpermissionsgroups.component';
-
+import { AssignGroupsComponent } from "./assign-access-groups/assign-access-groups.component";
 
 @NgModule({
   declarations:[
@@ -26,6 +26,7 @@ import { NewGlobalpermissionsgroupsComponent } from './globalpermissionsgroups/n
     EditUsersComponent,
     AllUsersComponent,
     GroupsComponent,
+    AssignGroupsComponent,
     UsersComponent,
     CUGroupComponent,
     NewGlobalpermissionsgroupsComponent

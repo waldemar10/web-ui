@@ -11,7 +11,7 @@ import { EditUsersComponent } from "./edit-users/edit-users.component";
 import { AllUsersComponent } from "./all-users/all-users.component";
 import { GroupsComponent } from "./groups/groups.component";
 import { UsersComponent } from "./users.component";
-
+import { AssignGroupsComponent } from "./assign-access-groups/assign-access-groups.component";
 const routes: Routes = [
   {
     path: '',
@@ -88,6 +88,14 @@ const routes: Routes = [
               permission: 'GroupAccess'
           },
           canActivate: [IsAuth,CheckPerm]},
+          {
+            path: 'assign-access-groups', component: AssignGroupsComponent,
+            data: {
+                kind: 'assign-access-groups',
+                breadcrumb: 'Assign Access Groups',
+                permission: 'GroupAccess'
+            },
+            canActivate: [IsAuth,CheckPerm]}
         ]
       }
    ]
