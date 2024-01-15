@@ -38,17 +38,21 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
 
   dtTrigger: Subject<any> = new Subject<any>();
   dtOptions: any = {};
-  isChecked =false;
 
+  //filter
+  isChecked = false;
   isFilterOpen = false;
   filteredAgents: any[] = [];
   
-  //filter values
+  //input values
   nameInput= "";
   ownerInput = "";
   hardwareInput = "";
-  statusInput = "";
-  accessGroupInput = "";
+  ipInput = "";
+  lastActInput = "";
+  plusInfoInput: string | undefined;
+  statusInput: string | undefined;
+  accessGroupInput: string | undefined;
 
   public agroups: {accessGroupId: number, groupName: string, isEdit: false }[] = [];
 
@@ -88,6 +92,9 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       dom: 'Bfrtip',
       stateSave: true,
       destroy: true,
+      ordering: false,
+      autoWidth:false,
+      bAutoWidth: false,
       lengthMenu: [
         [10, 25, 50, -1],
         ['10 rows', '25 rows', '50 rows', 'Show all rows']
@@ -97,12 +104,6 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       select: {
         style: 'multi',
         },
-      // columnDefs: [ {
-      //   width: "10% !important;",
-      //   targets: 0,
-      //   searchable: false,
-      //   orderable: false,
-      // } ],
       buttons: {
         dom: {
           button: {
@@ -233,41 +234,74 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
     this.isFilterOpen = !this.isFilterOpen;
   }
 
-  filterByAgentName(){
-    this.filteredAgents = this.showagents.filter((agent) => {
+  filterAgents() {
+    this.filteredAgents = this.applyFilters();
+  }
+  
+  applyFilters() {
+    let result = this.showagents;
+    //status
+    result = result.filter((agent) => {
+      switch (this.statusInput) {
+        case "Active":
+          return agent.isActive;
+        case "Inactive":
+          return !agent.isActive;
+        case "All":
+          return true;
+        default:
+          return true;
+      }
+    });
+    //agent name
+    result = result.filter((agent) => {
       return agent.agentName.toLowerCase().includes(this.nameInput.toLowerCase());
-    })
-  }
-
-  //TODO: Change Owner to display UserName instead of an Id
-  filterByOwner(){
-    this.filteredAgents = this.showagents.filter((agent) => {
-      return agent.userId.toString().toLowerCase().includes(this.ownerInput.toLowerCase());
-    })
-  }
-
-  filterByHardware(){
-    this.filteredAgents = this.showagents.filter((agent) => {
+    });
+    //owner
+    result = result.filter((agent) => {
+      if (this.ownerInput === "") {
+        return true;
+      }
+      return agent.userId?.toString().toLowerCase().includes(this.ownerInput.toLowerCase());
+    });
+    //cpu & gpu
+    result = result.filter((agent) => {
       return agent.devices.toLowerCase().includes(this.hardwareInput.toLowerCase());
-    })
-  }
+    });
+    //+info
+    result = result.filter((agent) => {
+      switch (this.plusInfoInput) {
+        case "trusted":
+          return agent.isTrusted;
+        case "cpuOnly":
+          return agent.cpuOnly;
+        case "cmd":
+          return agent.cmdPars !== "";
+        case "All":
+          return true;  
+        default:
+          return true;
+      }
+    });
+    //last activity
+    result = result.filter((agent) => {
+      console.log(agent)
+      return agent.lastAct.toLowerCase().includes(this.lastActInput.toLocaleLowerCase());
+    });
 
-  filterByStatus(){
-    this.filteredAgents = this.showagents.filter((agent) => {
-      if(this.statusInput === "Active" && agent.isActive)
+    result = result.filter((agent) => {
+      return agent.lastIp.toString().includes(this.ipInput);
+    });
+    //access group
+    result = result.filter((agent) => {
+      if (this.accessGroupInput === "All" || this.accessGroupInput === undefined) {
         return true;
-      else if(this.statusInput === "Inactive" && !agent.isActive)
-        return true;
-      else
-        return false;
-    })
-  }
-
-  filterByAccessGroup(){
-    this.filteredAgents = this.showagents.filter((agent) => {
-      return this.accessGroupInput === agent.accessGroups[0].groupName;
-    })
-  }
+      }
+      return this.accessGroupInput == agent.accessGroups[0]?.groupName;
+    });
+  
+    return result;
+  }  
 
   setCheckAll(){
     const chkBoxlength = $(".checkboxCls:checked").length;
