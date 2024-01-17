@@ -157,12 +157,26 @@ export class AssignGroupsComponent implements OnInit {
   }
 
   loadAgentsData() {
+    const params = { maxResults: this.maxResults };
     const paramsAgent = { maxResults: this.maxResults, expand: 'accessGroups' };
     this.gs.getAll(SERV.AGENTS, paramsAgent).subscribe((agents: any) => {
-      this.showAgentsDataForTable = agents.values;
+      this.gs.getAll(SERV.AGENT_ASSIGN,params).subscribe((assign: any) => {
+      this.gs.getAll(SERV.TASKS,params).subscribe((t: any)=>{
+
+      const getAData = agents.values.map(mainObject => {
+        const matchObjectTask = assign.values.find(e => e.agentId === mainObject.agentId)
+        return { ...mainObject, ...matchObjectTask}
+      })
+      const jointasks = getAData.map(mainObject => {
+        const matchObjectTask = t.values.find(e => e.taskId === mainObject.taskId)
+        return { ...mainObject, ...matchObjectTask}
+      })
+      this.showAgentsDataForTable = jointasks;
 
       this.dtTriggerAgents.next(void 0);
     });
+  });
+});
   }
   loadAccessGroups() {
     const params = { expand: 'agentMembers' };

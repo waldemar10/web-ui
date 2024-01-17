@@ -55,6 +55,7 @@
             <th class="rounded-start"></th>
             <th>ID</th>
             <th>Name</th>
+            <th>Assigned Task</th>
             <th class="rounded-end">Access Group</th>
           </tr>
         </thead>
@@ -71,6 +72,10 @@
             <td>
               {{ agent.agentName | shortenString : 15 | lowercase | titlecase }}
             </td>
+            <td>
+              <div>
+                {{ agent.taskName }}
+              </div>
             <td>
               <div *ngFor="let group of agent.accessGroups">
                 {{ group.groupName }}
