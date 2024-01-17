@@ -343,7 +343,7 @@
   <ngb-accordion #acc="ngbAccordion" >
     <ngb-panel>
       <ng-template ngbPanelTitle>
-        <span><b>Assign Agents</b></span>
+        <span><b>Assign free agents</b></span>
       </ng-template>
       <ng-template ngbPanelContent>
         <!-- <form [formGroup]="createForm">
@@ -359,8 +359,8 @@
           </grid-form-input>
           <button-submit (click)="asignAgents()" [name]="'Assign'"></button-submit>
         </form> -->
-        <table class="custom-table-light table-striped table-sm" datatable [dtOptions]="dtOptionsAssignAgents">
-          <thead >
+        <table class="table table-striped table-sm" datatable [dtOptions]="dtOptionsAssignAgents">
+          <thead class="thead-light">
               <tr>
                 <th class="rounded-start"></th>
                 <th>ID</th>

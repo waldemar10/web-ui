@@ -77,17 +77,6 @@ export class AssignGroupsComponent implements OnInit {
     return Array.from(this.selectedData);
   }
 
-  updateRowColors(selectedData: any): void {
-    const dataArray = Array.from(selectedData);
-
-    this.showAgentsDataForTable.forEach((agent) => {
-      const cleanedAgentName = agent.agentName.replace(/\s/g, '');
-      const uniqueKey = `${agent.agentId}-${cleanedAgentName.toUpperCase()}`;
-
-      agent.rowClass = dataArray.includes(uniqueKey) ? 'highlighted-row' : '';
-    });
-  }
-
   ngOnInit(): void {
     const self = this;
     this.loadAccessGroups();
@@ -147,10 +136,10 @@ export class AssignGroupsComponent implements OnInit {
             self.selectedData.delete(uniqueKey);
           } else {
             self.selectedData.add(uniqueKey);
-
-            self.updateRowColors(self.selectedData);
-            self.updateSelectedData(Array.from(self.selectedData));
           }
+
+          
+          self.updateSelectedData(Array.from(self.selectedData));
         });
       },
     };

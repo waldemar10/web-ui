@@ -491,15 +491,15 @@
         <span><b>Agents</b></span>
       </ng-template>
       <ng-template ngbPanelContent>
-        <table class="custom-table-light table-striped table-sm" datatable [dtOptions]="dtOptionsAgents">
-          <thead >
+        <table class="table table-striped table-sm" datatable [dtOptions]="dtOptionsAgents">
+          <thead class="thead-light">
               <tr>
-                <th></th> 
+                <th class="rounded-start"></th> 
                 <th>ID</th>
                 <th>Name</th>
                 <th>Assigned to</th>
                 <th>Access Group</th>
-                <th>Trusted Agent</th>
+                <th class="rounded-end">Trusted Agent</th>
               </tr>
             </thead>
             <tbody>

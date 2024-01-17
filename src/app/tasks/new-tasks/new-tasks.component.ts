@@ -206,18 +206,6 @@ export class NewTasksComponent implements OnInit {
     return Array.from(this.selectedData);
   }
 
-  updateRowColors(selectedData: any): void {
-
-    const dataArray = Array.from(selectedData);
- 
-    this.showAgentsDataForTable.forEach(agent => {
-      const cleanedAgentName = agent.agentName.replace(/\s/g, '');
-      const uniqueKey = `${agent.agentId}-${cleanedAgentName.toUpperCase()}`;
-
-      agent.rowClass = dataArray.includes(uniqueKey) ? 'highlighted-row' : '';
-    });
-  }
-
   ngOnInit(): void {
     
     this.fetchData(); 
@@ -313,38 +301,26 @@ export class NewTasksComponent implements OnInit {
       },
       buttons: [
         {
-          text: 'Add/Remove selected agents',
-          action: (e, dt, button, config) => {
-            const selectedRows = dt.rows({ selected: true }).data().toArray();
-      
-            selectedRows.forEach(row => {
- 
-              const rowId = row[1];
-              const rowName = row[2].toUpperCase();
-              const uniqueKey = `${rowId}-${rowName}`;
-       
-              if (this.selectedData.has(uniqueKey)) 
-              {
-                this.selectedData.delete(uniqueKey);
-              } 
-              else 
-              {
-                this.selectedData.add(uniqueKey);
-              }
-            });
-            
-            this.updateRowColors(this.selectedData);
-            this.updateSelectedData(Array.from(this.selectedData));
-            this.checkIfAgentIsTrusted();
-            dt.rows({ selected: true }).deselect();
-          }
-        },
-        {
           extend: 'pageLength',
           className: 'btn-sm',
           titleAttr: 'Show number of rows',
         }
       ]
+    },rowCallback: function (row, data, index) {
+      $(row).on('click', () => {
+        const rowId = data[1];
+        const rowName = data[2].toUpperCase();
+        const uniqueKey = `${rowId}-${rowName}`;
+
+        if (self.selectedData.has(uniqueKey)) {
+          self.selectedData.delete(uniqueKey);
+        } else {
+          self.selectedData.add(uniqueKey); 
+        }
+
+        self.updateSelectedData(Array.from(self.selectedData));
+        self.checkIfAgentIsTrusted();
+      });
     }
     
   }
