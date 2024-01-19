@@ -95,7 +95,9 @@ table.dataTable {
     font-weight: 400;
     font-weight: normal;
   }
-
+  td:hover{
+    cursor: pointer;
+  }
   .align-text {
     margin-right: -12px;
   }
