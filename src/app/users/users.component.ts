@@ -201,7 +201,7 @@ export class UsersComponent implements  OnInit {
   
     if (file) {
       this.fileData = file;
-      this.readExcel(file);
+      this.readCSV(file);
     }
   });
   }
@@ -229,7 +229,7 @@ export class UsersComponent implements  OnInit {
     return false;
   }
 
-  readExcel(file: File): void {
+  readCSV(file: File): void {
     const reader: FileReader = new FileReader();
 
     reader.onload = (e: any) => {

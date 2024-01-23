@@ -133,7 +133,9 @@
               </div>
             </div>
             <div class="row">
-
+              <div>
+                Access Group
+              </div>
 
               </div>
             </div>
@@ -343,7 +345,7 @@
   <ngb-accordion #acc="ngbAccordion" >
     <ngb-panel>
       <ng-template ngbPanelTitle>
-        <span><b>Assign Agents</b></span>
+        <span><b>Assign agents</b></span>
       </ng-template>
       <ng-template ngbPanelContent>
         <!-- <form [formGroup]="createForm">
@@ -359,8 +361,8 @@
           </grid-form-input>
           <button-submit (click)="asignAgents()" [name]="'Assign'"></button-submit>
         </form> -->
-        <table class="custom-table-light table-striped table-sm" datatable [dtOptions]="dtOptionsAssignAgents">
-          <thead >
+        <table class="table table-hover table-striped table-sm" datatable [dtOptions]="dtOptionsAssignAgents">
+          <thead class="thead-light">
               <tr>
                 <th class="rounded-start"></th>
                 <th>ID</th>
@@ -502,7 +504,7 @@
             <td *ngIf="gc.solveTime > 0"> {{ gc.solveTime | uiDate }} </td>
             <td>{{ (gc.solveTime - gc.dispatchTime) | sectotime }}</td>
             <td>
-              <span class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="{{'background-color:'+(gc.state | staticArray:'statescolor')}}">
+              <span class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" [style.background-color]="gc.state | staticArray:'statescolor'">
                 {{ gc.state | staticArray:'states' }}
               </span>
             </td>

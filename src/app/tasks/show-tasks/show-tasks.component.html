@@ -18,7 +18,7 @@
         <th>Name</th>
         <th>Status</th>
         <th>+Info</th>
-        <th>Preprocessor</th>
+        <th>Pre- processor</th>
         <th>Hashlist</th>
         <th>Dispatched/<br/>Searched</th>
         <th>Cracked</th>
@@ -26,6 +26,7 @@
         <th>Speed</th>
         <th>Priority</th>
         <th>Max Agents</th>
+        <th>Access Groups</th>
         <th class="rounded-end">Actions</th>
     </tr>
     <tr [hidden]="!isFilterOpen">
@@ -87,6 +88,7 @@
         <th>
           <input type="text" (keyup)='search($event,"maxAgents")' placeholder="Max."/>
         </th>
+        <th>Access Group</th>
       <!-- Actions -->
         <th class="rounded-end"></th>
       </tr>
@@ -109,6 +111,7 @@
             </div>
             <div class="col-md-4">
               <span *ngIf="task.keyspaceProgress >= task.keyspace && task.keyspaceProgress > 0" ngbTooltip="Completed"><fa-icon [icon]="faCheckCircle" aria-hidden="true"></fa-icon></span>
+              <span *ngIf="task.priority == 0" ngbTooltip="Paused"><fa-icon [icon]="faPause" aria-hidden="true"></fa-icon></span>
             </div>
           </div>
         </td>
@@ -168,6 +171,7 @@
           <fa-icon style="cursor: pointer;" (click)="this.onModalUpdate('New Max. Agents', task.taskId, task.maxAgents, false, task.taskName, task.taskType)" [icon]="faPencil" aria-hidden="true"></fa-icon>
         </td>
         <td *ngIf="task.taskType === 1">-</td>
+        <td >{{task.accessGroup.groupName}}</td>
         <td>
         <div [ngSwitch]="whichView">
           <div *ngSwitchCase="'live'">
@@ -186,6 +190,12 @@
               </button>
               <button ngbDropdownItem (click)="onArchive((task.taskType === 0 ? task.taskId: task.taskWrapperId ),task.taskType)" data-toggle="tooltip" data-placement="top" title="Archive">
                 <fa-icon [icon]="faArchive" aria-hidden="true"></fa-icon> Archive
+              </button>
+              <button ngbDropdownItem (click)="onPause(task)" data-toggle="tooltip" data-placement="top" title="Pause">
+                <fa-icon [icon]="faPause" aria-hidden="true"></fa-icon> Pause Task & Agent
+              </button>
+              <button ngbDropdownItem (click)="onStart(task)" data-toggle="tooltip" data-placement="top" title="Start">
+                <fa-icon [icon]="faPlay" aria-hidden="true"></fa-icon> Activate Task & Agent
               </button>
               <div class="dropdown-divider"></div>
               <button ngbDropdownItem (click)="onDelete((task.taskType === 0 ? task.taskId: task.taskWrapperId ),task.taskType)" data-toggle="tooltip" data-placement="top" title="Delete">
@@ -206,6 +216,12 @@
               </button>
               <button ngbDropdownItem (click)="getSubtasks(task.taskWrapper, task.taskWrapperId)" data-toggle="tooltip" data-placement="top" title="Edit" *ngIf="task.taskType === 1">
                 <fa-icon [icon]="faEdit" aria-hidden="true"></fa-icon> Edit SubTasks
+              </button>
+              <button ngbDropdownItem (click)="onPause(task)" data-toggle="tooltip" data-placement="top" title="Pause">
+                <fa-icon [icon]="faPause" aria-hidden="true"></fa-icon> Pause Task & Agent
+              </button>
+              <button ngbDropdownItem (click)="onStart(task)" data-toggle="tooltip" data-placement="top" title="Start">
+                <fa-icon [icon]="faPlay" aria-hidden="true"></fa-icon> Activate Task & Agent
               </button>
               <div class="dropdown-divider"></div>
               <button ngbDropdownItem (click)="onDelete((task.taskType === 0 ? task.taskId: task.taskWrapperId ),task.taskType)" data-toggle="tooltip" data-placement="top" title="Delete">

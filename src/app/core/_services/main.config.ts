@@ -9,6 +9,7 @@ export class SERV {
   // ACCESS
   public static AUTH = '/auth';
   public static ACCESS_GROUPS = '/ui/accessgroups';
+  public static ACCESS_GROUPS_AGENTS = '/ui/accessgroupsagent';
   public static ACCESS_PERMISSIONS_GROUPS = '/ui/globalpermissiongroups';
   // AGENTS
   public static AGENTS = '/ui/agents';
