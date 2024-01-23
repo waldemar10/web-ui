@@ -302,7 +302,7 @@ export class AssignGroupsComponent implements OnInit {
           showConfirmButton: false,
           timer: 1500,
         });
-  
+        this.selectedGroup = this.filterData[0];
         this.ngOnInit();
         this.rerender();
       });
@@ -341,7 +341,7 @@ export class AssignGroupsComponent implements OnInit {
           showConfirmButton: false,
           timer: 1500,
         });
-
+        this.selectedGroup = this.filterData[0];
         this.ngOnInit();
         this.rerender();
       });

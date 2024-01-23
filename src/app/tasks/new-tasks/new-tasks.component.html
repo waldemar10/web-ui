@@ -46,13 +46,15 @@
               </grid-form-input>
             </div>
             <grid-form-input [name]="'Assigned Agents'" >
-              <div *ngIf="selectedData.size !== 0;">   
+              <small *ngIf="selectedData.size !== 0;">   
                 {{ getSelectedDataArray().join(', ') }}
-              </div> 
-              <div *ngIf="selectedData.size === 0;">   
+              </small> 
+              <small *ngIf="selectedData.size === 0;">   
                 No Agents Selected
-              </div>       
+              </small>       
             </grid-form-input>  
+            <div class="row">
+              <div class="col">
             <grid-form-input [name]="'Hashlist'" [labelclass]="'requiredak'" >
               <select      
                     type='number'
@@ -63,9 +65,18 @@
                 >
                 <option></option>
             </select>
-           
+          
             </grid-form-input>
-           
+          </div>
+            <div class="col">
+            <grid-form-input [name]="'Access Group'" >
+            <small *ngIf="hashlistAccessGroup !== undefined" data-toggle="tooltip" data-placement="top" title="You can change the access group in your hashlist">
+              {{hashlistAccessGroup.groupName}}
+              <fa-icon [icon]="faInfoCircle" aria-hidden="true"  placement="top"></fa-icon> 
+            </small>
+          </grid-form-input>
+        </div>
+          </div>
             <div *ngIf="needTrusted" class="alert alert-info" >Hashlist needs trusted agents</div>
           
             <div class="form-group">
@@ -307,6 +318,7 @@
             </ngb-accordion>
           <span *ngIf="!createForm.valid && createForm.touched" class="help-block" >Please complete all the form!</span><br>
           <div class="alert alert-warning" *ngIf="notTrustedAgent">At least one agent is not trustworthy</div>
+          <div class="alert alert-danger" *ngIf="!sameAccessGroup">Agent & Hashlist dont have the same access group.</div>
           <button-submit [name]="'Create'"></button-submit>
       </form>
     </grid-main>

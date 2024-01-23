@@ -6,7 +6,8 @@ import { environment } from './../../../environments/environment';
 import { ActivatedRoute, Params } from '@angular/router';
 import { DataTableDirective } from 'angular-datatables';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, forkJoin, of } from 'rxjs';
+import { switchMap, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 import { UIConfigService } from 'src/app/core/_services/shared/storage.service';
@@ -56,7 +57,9 @@ export class NewTasksComponent implements OnInit {
 
   needTrusted = false;
   notTrustedAgent = false;
+  sameAccessGroup = true;
 
+  hashlistAccessGroup: any;
   showAgentsDataForTable: any = [];
   selectedData: Set<any> = new Set();
   agentIds: any;
@@ -197,9 +200,12 @@ export class NewTasksComponent implements OnInit {
   tasktip: any =[]
 
   updateSelectedData(selectedData: any[]) {
+    return new Promise((resolve) => {
     this.selectedData = new Set(selectedData);
     this.agentIds = selectedData.map(item => parseInt(item.split('-')[0]));
     this._changeDetectorRef.detectChanges();
+      resolve(1);
+  });
   }
 
   getSelectedDataArray(): any[] {
@@ -318,9 +324,11 @@ export class NewTasksComponent implements OnInit {
           self.selectedData.add(uniqueKey); 
         }
 
-        self.updateSelectedData(Array.from(self.selectedData));
+        self.updateSelectedData(Array.from(self.selectedData)).then(() => {
         self.checkIfAgentIsTrusted();
+        self.checkIfAgentHasSameAccessGroup();
       });
+    });
     }
     
   }
@@ -439,9 +447,9 @@ export class NewTasksComponent implements OnInit {
     },2000);
     this.dtTrigger.next(null);
 
-    const params = {'maxResults': this.maxResults};
+    const params = {'maxResults': this.maxResults, 'expand': 'accessGroup'};
 
-    this.gs.getAll(SERV.HASHLISTS,params).subscribe((hlist: any) => {
+     this.gs.getAll(SERV.HASHLISTS,params).subscribe((hlist: any) => {
       const self = this;
       const response = hlist.values;
       ($("#hashlist") as any).selectize({
@@ -480,7 +488,7 @@ export class NewTasksComponent implements OnInit {
             selectize.setValue(selected_items);
           },
           });
-      });
+      }); 
 
   }
 
@@ -519,6 +527,12 @@ export class NewTasksComponent implements OnInit {
     this.createForm.patchValue({
       hashlistId: Number(value)
     });
+    this.gs.get(SERV.HASHLISTS,value,{'expand': 'accessGroup'}).subscribe((hlist: any) => {
+      this.hashlistAccessGroup = hlist.accessGroup;
+
+      this.checkIfAgentHasSameAccessGroup();
+    });
+    
     this.checkIsTrustedRequired(value);
     this._changeDetectorRef.detectChanges();
   }
@@ -532,6 +546,7 @@ export class NewTasksComponent implements OnInit {
     });
   }
   checkIfAgentIsTrusted(){
+    if(this.agentIds !== undefined){
     if(this.needTrusted === true){
     this.gs.getAll(SERV.AGENTS).subscribe((agents: any) => {
 
@@ -547,10 +562,43 @@ export class NewTasksComponent implements OnInit {
     this.notTrustedAgent = false;
   }
   }
-
+  }
+  checkIfAgentHasSameAccessGroup() {
+    const params = { 'maxResults': this.maxResults, 'expand': 'accessGroups' };
+  
+    if (this.agentIds !== undefined && this.hashlistAccessGroup !== undefined) {
+      const observables = this.agentIds.map(id => this.gs.get(SERV.AGENTS, id, params));
+  
+      forkJoin(observables).pipe(
+        switchMap((responses: any[]) => {
+          let allAgentsHaveSameAccessGroup = true;
+  
+          responses.forEach((agents, index) => {
+            console.log(`Response for agent ${this.agentIds[index]}:`, agents);
+  
+            let agentHasSameAccessGroup = agents.accessGroups.some(accessGroup =>
+              accessGroup.accessGroupId === this.hashlistAccessGroup.accessGroupId
+            );
+  
+            if (!agentHasSameAccessGroup) {
+              allAgentsHaveSameAccessGroup = false;
+              return;
+            }
+          });
+  
+          return of(allAgentsHaveSameAccessGroup);
+        })
+      ).subscribe((result) => {
+        this.sameAccessGroup = result;
+        console.log('Final Result:', this.sameAccessGroup);
+      });
+    } else {
+      this.sameAccessGroup = true; 
+    }
+  }
   onSubmit(){
     
-    if(this.needTrusted === true && this.notTrustedAgent === false){
+    if(this.needTrusted === true && this.notTrustedAgent === false && this.sameAccessGroup === true){
     if (this.createForm.valid) {     
       this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
         const taskId = response.taskId; //Get the current task id
@@ -565,7 +613,7 @@ export class NewTasksComponent implements OnInit {
         }
       );
     }
-  }else if (this.needTrusted === false){
+  }else if (this.needTrusted === false && this.sameAccessGroup === true){
     if (this.createForm.valid) {     
       this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
         const taskId = response.taskId; //Get the current task id

@@ -60,8 +60,9 @@ export class AllUsersComponent  implements OnInit, OnDestroy {
 
   ngOnInit(): void {
 
-    const params = {'maxResults': this.maxResults, 'expand': 'globalPermissionGroup' }
+    const params = {'maxResults': this.maxResults, 'expand': 'globalPermissionGroup accessGroups' }
     this.gs.getAll(SERV.USERS,params).subscribe((users: any) => {
+      console.log(users);
       this.allusers = users.values;
       this.dtTrigger.next(void 0);
     });

@@ -24,7 +24,7 @@ import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DataTableDirective } from 'angular-datatables';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
-import { Subject, Subscription, forkJoin } from 'rxjs';
+import { Subject, Subscription, catchError, delay, forkJoin, of } from 'rxjs';
 
 import { GlobalService } from '../../core/_services/main.service';
 import { PageTitle } from 'src/app/core/_decorators/autotitle';
@@ -64,7 +64,6 @@ export class ShowTasksComponent implements OnInit {
   dtTrigger: Subject<any> = new Subject<any>();
   dtTrigger1: Subject<any> = new Subject<any>();
   dtOptions: any = {};
-  dtOptions1: any = {};
   dtOptionsWithFilter: any;
   dtOptionsWithoutFilter: any;
   private updateSubscription: Subscription;
@@ -119,8 +118,8 @@ export class ShowTasksComponent implements OnInit {
         dom: 'Bfrtip',
         bStateSave: true,
         destroy: true,
-        autoWidth: false,
-        bAutoWidth: false,
+        autoWidth: true,
+        bAutoWidth: true,
         order: [], // Removes the default order by id. We need it to sort by priority.
         pageLength: -1,
         bSortCellsTop: true,
@@ -359,7 +358,7 @@ export class ShowTasksComponent implements OnInit {
       .subscribe((tw: any) => {
         this.gs.getAll(SERV.TASKS, params).subscribe((tasks: any) => {
           this.gs
-            .getAll(SERV.HASHLISTS, { maxResults: this.maxResults })
+            .getAll(SERV.HASHLISTS, { 'maxResults': this.maxResults, 'expand': 'accessGroup' })
             .subscribe((h: any) => {
               const filtersupert = tw.values.filter(
                 (u) => u.taskType == 1 && u.isArchived === this.isArchived
@@ -370,23 +369,33 @@ export class ShowTasksComponent implements OnInit {
                 );
                 return { ...mainObject, ...matchObject };
               }); //Join Supertasks from TaskWrapper with Hashlist info
-              const mergeTasks = tasks.values.map((mainObject) => {
+              const hashdata = tasks.values.map((mainObject) => {
+                const matchObject = h.values.find(
+                  (element) => element.hashlistId === mainObject.hashlist[0].hashlistId
+                );
+                return { ...mainObject, ...matchObject };
+              });
+              // Show only tasks with the right accessGroup
+              const filteredTasks = hashdata.filter((task) => task.accessGroup);
+
+              const mergeTasks = filteredTasks.map((mainObject) => {
                 const matchObject = tw.values.find(
                   (element) =>
                     element.taskWrapperId === mainObject.taskWrapperId
                 );
                 return { ...mainObject, ...matchObject };
               }); // Join Tasks with Taskwrapper information for filtering
+              
               const filtertasks = mergeTasks.filter(
                 (u) => u.taskType == 0 && u.isArchived === this.isArchived
               ); //Filter Active Tasks remove subtasks
               const prepdata = filtertasks.concat(supertasks); // Join with supertasks
+              
               //Order by Task Priority. filter exclude when is cracked && (a.keyspaceProgress < a.keyspace)
               this.alltasks = prepdata.sort(
                 (a, b) => Number(b.priority) - Number(a.priority)
               );
               this.filterData = this.alltasks;
-
               this.dtTrigger.next(null);
             });
         });
@@ -453,17 +462,18 @@ export class ShowTasksComponent implements OnInit {
       );
 
       // Set all Agents assigned to the task to active
-      const updateAgentObservables = task.assignedAgents.map((t: any) => {
+      task.assignedAgents.map((t: any) => {
         const updateAgent = { isActive: false };
-        return this.gs.update(SERV.AGENTS, t.agentId, updateAgent);
+        this.gs.update(SERV.AGENTS, t.agentId, updateAgent).subscribe(
+           //
+      );
       });
 
       forkJoin({
         taskResult: updateTaskObservable,
         taskWrapperResult: updateTaskWrapperObservable,
-        agentResults: updateAgentObservables,
       }).subscribe({
-        next: ({ taskResult, taskWrapperResult, agentResults }) => {
+        next: ({ taskResult, taskWrapperResult }) => {
           Swal.fire({
             title: 'Success',
             text: 'Active!',
@@ -505,19 +515,21 @@ export class ShowTasksComponent implements OnInit {
         task.taskWrapperId,
         updatePriority
       );
-
+    
       // Set all Agents assigned to the task to active
-      const updateAgentObservables = task.assignedAgents.map((t: any) => {
+      const updateAgentObservables = null;
+      task.assignedAgents.map((t: any) => {
         const updateAgent = { isActive: true };
-        return this.gs.update(SERV.AGENTS, t.agentId, updateAgent);
+        this.gs.update(SERV.AGENTS, t.agentId, updateAgent).subscribe(
+           //
+      );
       });
 
       forkJoin({
         taskResult: updateTaskObservable,
         taskWrapperResult: updateTaskWrapperObservable,
-        agentResults: updateAgentObservables,
       }).subscribe({
-        next: ({ taskResult, taskWrapperResult, agentResults }) => {
+        next: ({ taskResult, taskWrapperResult }) => {
           Swal.fire({
             title: 'Success',
             text: 'Active!',

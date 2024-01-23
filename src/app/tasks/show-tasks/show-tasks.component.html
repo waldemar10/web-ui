@@ -18,7 +18,7 @@
         <th>Name</th>
         <th>Status</th>
         <th>+Info</th>
-        <th>Preprocessor</th>
+        <th>Pre- processor</th>
         <th>Hashlist</th>
         <th>Dispatched/<br/>Searched</th>
         <th>Cracked</th>
@@ -26,6 +26,7 @@
         <th>Speed</th>
         <th>Priority</th>
         <th>Max Agents</th>
+        <th>Access Groups</th>
         <th class="rounded-end">Actions</th>
     </tr>
     <tr [hidden]="!isFilterOpen">
@@ -87,6 +88,7 @@
         <th>
           <input type="text" (keyup)='search($event,"maxAgents")' placeholder="Max."/>
         </th>
+        <th>Access Group</th>
       <!-- Actions -->
         <th class="rounded-end"></th>
       </tr>
@@ -169,6 +171,7 @@
           <fa-icon style="cursor: pointer;" (click)="this.onModalUpdate('New Max. Agents', task.taskId, task.maxAgents, false, task.taskName, task.taskType)" [icon]="faPencil" aria-hidden="true"></fa-icon>
         </td>
         <td *ngIf="task.taskType === 1">-</td>
+        <td >{{task.accessGroup.groupName}}</td>
         <td>
         <div [ngSwitch]="whichView">
           <div *ngSwitchCase="'live'">
