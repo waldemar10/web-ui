@@ -63,7 +63,7 @@
       <tbody>
       
         <tr *ngFor="let agent of filteredAgents">
-          <td><input type="checkbox" [disabled]="agent.agentId === 1" class="checkboxCls" [value]="agent.agentId" [checked]="agent.checked" name="id" (change)="agent.checked = !agent.checked">{{ agent.agentId }}</td>
+          <td>{{ agent.agentId }}</td>
           <td>
             <span *ngIf="agent.isActive === true" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: green;">
                 Active

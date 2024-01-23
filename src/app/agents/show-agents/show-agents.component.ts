@@ -285,7 +285,6 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
     });
     //last activity
     result = result.filter((agent) => {
-      console.log(agent)
       return agent.lastAct.toLowerCase().includes(this.lastActInput.toLocaleLowerCase());
     });
 
@@ -334,11 +333,11 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
         let title: String;
         let iconType: String;
-        if (!res.error) {
+        if (!res.data.error) {
           title = "Shutdown command has been sent out";
           iconType = "success";
         } else {
-          title = res.error;
+          title = res.data.error;
           iconType = "error";
         }
         
@@ -372,12 +371,12 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
         let title: String;
         let iconType: String;
-
-        if (!res.error) {
+      
+        if (!res.data.error) {
           title = "Shutdown command has been sent out";
           iconType = "success";
         } else {
-          title = res.error;
+          title = res.data.error;
           iconType = "error";
         }
         
