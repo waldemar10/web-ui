@@ -108,8 +108,8 @@ export class NewHealthChecksComponent implements OnInit {
     const responseThreshold = currentTime - agentResponseTime;
 
     //Agent responded which means its connected to the server
-    this.agents_eligible = tempAgents.filter((agent) => agent.lastTime >= responseThreshold);
-    this.agents_notEligible = tempAgents.filter((agent) => agent.lastTime < responseThreshold);
+    this.agents_eligible = tempAgents.filter((agent) => agent.lastTime >= responseThreshold && !agent?.isWorking);
+    this.agents_notEligible = tempAgents.filter((agent) => agent.lastTime < responseThreshold || agent?.isWorking);
   
     this.filteredAgents = this.agents_eligible;
   }
