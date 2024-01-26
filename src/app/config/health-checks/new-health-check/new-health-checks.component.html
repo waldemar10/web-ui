@@ -69,10 +69,13 @@
           style="border-bottom: dashed 1px grey; padding-bottom: 3px !important;">
           <input type="checkbox" [checked]="agent.selected" class="me-2" [style.cursor]="'pointer'" (change)="selectAgent(agent)"/>
           <span [routerLink]="['/agents/agent-status', agent.agentId, 'edit']" [style.cursor]="'pointer'">{{ agent.agentName }}</span>
-          <span *ngIf="agent.isActive === true" class="badge my-0" style="background-color: green;">
+          <span *ngIf="agent?.isWorking" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: rgb(84,112,198);">
+            Working
+          </span>
+          <span *ngIf="agent.isActive && !agent?.isWorking" class="badge my-0" style="background-color: green;">
             Active
           </span>
-          <span *ngIf="agent.isActive === false" class="badge my-0" style="background-color: rgba(255, 136, 0, 0.87);">
+          <span *ngIf="!agent.isActive" class="badge my-0" style="background-color: rgba(255, 136, 0, 0.87);">
             Inactive
           </span>
         </div>

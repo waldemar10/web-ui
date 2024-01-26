@@ -65,10 +65,13 @@
         <tr *ngFor="let agent of filteredAgents">
           <td>{{ agent.agentId }}</td>
           <td>
-            <span *ngIf="agent.isActive === true" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: green;">
+            <span *ngIf="agent?.isWorking" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: rgb(84,112,198);">
+              Working
+            </span>
+            <span *ngIf="agent.isActive && !agent?.isWorking" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: green;">
                 Active
             </span>
-            <span *ngIf="agent.isActive === false" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: rgba(255, 136, 0, 0.87);">
+            <span *ngIf="!agent.isActive" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: rgba(255, 136, 0, 0.87);">
               Inactive
             </span>
           </td>

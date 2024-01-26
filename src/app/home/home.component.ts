@@ -7,6 +7,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 import { interval, Subscription, forkJoin } from 'rxjs';
 import { HeatmapChart } from 'echarts/charts';
 import * as echarts from 'echarts/core';
+import { AgentStatusService } from '../core/_services/agent-status.service';
 
 import { GlobalService } from 'src/app/core/_services/main.service';
 import { PageTitle } from 'src/app/core/_decorators/autotitle';
@@ -70,6 +71,7 @@ export class HomeComponent implements OnInit {
     private gs: GlobalService,
     private cs: CookieService,
     private modalService: NgbModal,
+    private as: AgentStatusService,
   ) {}
 
   private modalRef: NgbModalRef;
@@ -116,7 +118,7 @@ export class HomeComponent implements OnInit {
     if (data.length > 0) {
       data.forEach(task => {
         task.assignedAgents.forEach(agent => {
-          if (task.progress !== 100 && agent.isActive) {
+          if (task.progress !== 100 && this.as.getWorkingStatus(agent)) {
             filteredAgentIds.push(agent._id);
           }
         });

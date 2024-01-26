@@ -5,6 +5,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { GlobalService } from 'src/app/core/_services/main.service';
+import { AgentStatusService } from 'src/app/core/_services/agent-status.service';
 import { PageTitle } from 'src/app/core/_decorators/autotitle';
 import { SERV } from '../../../core/_services/main.config';
 import { environment } from 'src/environments/environment';
@@ -24,7 +25,8 @@ export class NewHealthChecksComponent implements OnInit {
   
   constructor(
     private gs: GlobalService,
-    private router:Router
+    private router:Router,
+    private as: AgentStatusService,
   ) { }
 
   crackertype: any = [];
@@ -47,10 +49,11 @@ export class NewHealthChecksComponent implements OnInit {
     });
 
     this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
-      console.log(agents.values)
       const tempAgents = agents.values;
       tempAgents.forEach(agent => {
         agent.selected = false;
+        if(this.as.getWorkingStatus(agent))
+          agent.isWorking = true;
       })
       this.getEligibleAgentsForCheck(tempAgents, +agentResponseTime);
     });

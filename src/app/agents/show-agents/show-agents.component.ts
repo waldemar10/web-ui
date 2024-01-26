@@ -10,6 +10,7 @@ import { UIConfigService } from 'src/app/core/_services/shared/storage.service';
 import { GlobalService } from 'src/app/core/_services/main.service';
 import { PageTitle } from 'src/app/core/_decorators/autotitle';
 import { SERV } from '../../core/_services/main.config';
+import { AgentStatusService } from "src/app/core/_services/agent-status.service";
 
 declare let $:any;
 
@@ -68,17 +69,20 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   constructor(
     private uiService: UIConfigService,
     private gs: GlobalService,
+    private as: AgentStatusService,
   ) {}
 
   ngOnInit(): void {
-
     const agentParams = {'maxResults': this.maxResults, 'expand':'accessGroups'}
     const aGroupParams = {'maxResults': this.maxResults}
 
     this.gs.getAll(SERV.AGENTS,agentParams).subscribe((agents: any) => {
+      agents.values.forEach((agent) => {
+        if(this.as.getWorkingStatus(agent))
+          agent.isWorking = true;
+      })
       this.showagents = agents.values;
       this.filteredAgents = agents.values;
-      // this.showagents.forEach(f => (f.checked = false));
       this.dtTrigger.next(void 0);
     });
 

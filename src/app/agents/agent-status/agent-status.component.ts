@@ -9,6 +9,7 @@ import { UIConfigService } from 'src/app/core/_services/shared/storage.service';
 import { CookieService } from 'src/app/core/_services/shared/cookies.service';
 import { FilterService } from 'src/app/core/_services/shared/filter.service';
 import { GlobalService } from 'src/app/core/_services/main.service';
+import { AgentStatusService } from 'src/app/core/_services/agent-status.service';
 import { PageTitle } from 'src/app/core/_decorators/autotitle';
 import { ASC } from '../../core/_constants/agentsc.config';
 import { environment } from 'src/environments/environment';
@@ -76,7 +77,8 @@ export class AgentStatusComponent implements OnInit {
     private cookieService: CookieService,
     private uiService: UIConfigService,
     private modalService: NgbModal,
-    private gs: GlobalService
+    private gs: GlobalService,
+    private as: AgentStatusService,
   ) { }
 
   // View Menu
@@ -322,8 +324,12 @@ export class AgentStatusComponent implements OnInit {
             
             this.showagents = this.filteredAgents = jointasks.map(mainObject => {
             const matchObjectAgents = c.values.find(e => e.agentId === mainObject.agentId)
-            
             return { ...mainObject, ...matchObjectAgents}
+            })
+
+            this.showagents.forEach((agent) => {
+              if(this.as.getWorkingStatus(agent))
+              agent.isWorking = true;
             })
 
             this.dtTrigger.next(void 0);

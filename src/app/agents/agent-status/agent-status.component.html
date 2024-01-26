@@ -433,14 +433,16 @@
 
           <td style="white-space: nowrap;">
             <a [routerLink]="['/agents/agent-status',aa.agentId,'edit']">{{ aa.agentName | shortenString:15 | lowercase | titlecase }}</a>
-            <span *ngIf="aa.isTrusted === true" ><fa-icon [icon]="faLock" aria-hidden="true" ngbTooltip='Trust agent with secret data'></fa-icon></span>
           </td>
           <!-- Agent Status -->
           <td>
-            <span *ngIf="aa.isActive === true" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: green;">
+            <span *ngIf="aa?.isWorking" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: rgb(84,112,198);">
+              Working
+            </span>
+            <span *ngIf="aa.isActive && !aa?.isWorking" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: green;">
               Active
             </span>
-            <span *ngIf="aa.isActive === false" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: rgba(255, 136, 0, 0.87);">
+            <span *ngIf="!aa.isActive" class="ui-label-inner inline-flex whitespace-nowrap items-center px-2 py-0.5 rounded-md text-xs font-medium text-white capitalize badge my-0" style="background-color: rgba(255, 136, 0, 0.87);">
               Inactive
             </span>
           </td>
@@ -495,6 +497,7 @@
           <td style="white-space: nowrap;" >
             <fa-icon *ngIf="showagents[i].cmdPars" [icon]="faTerminal" aria-hidden="true" ngbTooltip={{showagents[i].cmdPars}}></fa-icon>
             <fa-icon *ngIf="showagents[i].cpuOnly" [icon]="faMicrochip" aria-hidden="true" ngbTooltip="CPU Only"></fa-icon>
+            <span *ngIf="aa.isTrusted === true" ><fa-icon [icon]="faLock" aria-hidden="true" ngbTooltip='Trust agent with secret data'></fa-icon></span>
           </td>
         
          <!--  ** ACCESS GROUP -->
