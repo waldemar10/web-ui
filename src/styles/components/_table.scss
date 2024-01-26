@@ -35,10 +35,36 @@
   float: right;
 }
 .highlighted-row {
-  background-color: rgb(156, 254, 92) !important;
+  background-color: rgb(43, 142, 255) !important;
 }
 .highlighted-row:hover{
-  background-color: rgb(122, 199, 72) !important;
+  background-color: rgb(36, 116, 208) !important;
+}
+.table-v2{
+  border-collapse: collapse;
+  width:100%;
+  
+}
+.table-v2 td, .table-v2 th {
+  padding: 8px;
+  border-bottom-width: 1px;
+  border-color: #dee2e6;
+  border-style: solid;
+}
+.table-v2 tr:nth-child(even){background-color: #f2f2f2;}
+
+.table-v2  tbody tr:hover {background-color: #ddd; cursor: pointer;}
+
+.table-v2 th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #F2F4F6;
+  color: #1F2937;
+  text-transform: uppercase;
+  font-weight: normal;
+  vertical-align: bottom;
+  font-size: 0.875rem;
 }
 // Overrule datatables color setting
 table.dataTable tbody tr.selected>* {

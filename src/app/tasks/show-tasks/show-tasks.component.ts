@@ -448,6 +448,27 @@ export class ShowTasksComponent implements OnInit {
   onPause(task: any) {
     // Pause all Agents assigned to the task
     if (task.assignedAgents.length > 0) {
+
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: 'btn',
+          cancelButton: 'btn',
+        },
+        buttonsStyling: false,
+      });
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'The chunks that are currently being processed are not completed.',
+        icon: 'warning',
+        reverseButtons: true,
+        showCancelButton: true,
+        cancelButtonColor: '#8A8584',
+        confirmButtonColor: '#C53819',
+        confirmButtonText: 'Yes, pause!',
+      }).then((result) => {
+        if (result.isConfirmed) {
+
+
       // Set the priority to 0
       let updatePriority = { priority: +0 };
       const updateTaskObservable = this.gs.update(
@@ -460,7 +481,7 @@ export class ShowTasksComponent implements OnInit {
         task.taskWrapperId,
         updatePriority
       );
-
+      
       // Set all Agents assigned to the task to active
       task.assignedAgents.map((t: any) => {
         const updateAgent = { isActive: false };
@@ -496,6 +517,16 @@ export class ShowTasksComponent implements OnInit {
           console.log('Error when pausing the task: ' + error);
         },
       });
+    }
+    else {
+      swalWithBootstrapButtons.fire({
+        title: 'Cancelled',
+        text: 'Cancelled pause task!',
+        icon: 'error',
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    }});
     }
   }
 

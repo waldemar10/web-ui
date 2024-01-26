@@ -1,13 +1,10 @@
 <!-- Body -->
-<app-page-title [title]="'Assign Access Group'" ></app-page-title>
+<app-page-title [title]="'Assign Access Group'"></app-page-title>
 <app-table>
   <div class="row g-3">
     <div class="col-4">
       <div style="width: 300px">
-        <select
-          class="form-select mb-2"
-          [(ngModel)]="selectedGroup"
-        >
+        <select class="form-select mb-2" [(ngModel)]="selectedGroup">
           <option [ngValue]="undefined" disabled>Select AccessGroup</option>
           <option *ngFor="let group of filterData" [ngValue]="group">
             {{ group.accessGroupId }} {{ group.groupName }}
@@ -44,26 +41,65 @@
     </div>
 
     <div class="col-8">
-      <table
+      <!-- <table
         class="table table-hover table-striped table-sm"
         datatable
         [dtOptions]="dtOptionsAgents"
         [dtTrigger]="dtTriggerAgents"
+      > -->
+      <button
+        class="dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt"
+        (click)="onFilterClick()"
       >
+        Filter
+      </button>
+      <table class="table-v2 table-hover table-striped table-sm">
         <thead class="thead-light">
           <tr>
-            <th class="rounded-start"></th>
+            <th >
+              <input
+                type="checkbox"
+                [checked]="selectAllChecked"
+                (change)="toggleSelectAll()"
+              />
+            </th>
             <th>ID</th>
             <th>Name</th>
             <th>Assigned Task</th>
-            <th class="rounded-end">Access Group</th>
+            <th >Access Group</th>
+          </tr>
+          <tr [hidden]="!isFilterOpen">
+            <th ></th>
+            <th></th>
+            <th>
+              <input
+                type="text"
+                (keyup)="search($event, 'name')"
+                placeholder="Name"
+              />
+            </th>
+            <th>
+              <input
+                type="text"
+                (keyup)="search($event, 'assignedTask')"
+                placeholder="Assigned Task"
+              />
+            </th>
+            <th >
+              <input
+                type="text"
+                (keyup)="search($event, 'accessGroup')"
+                placeholder="Access Group"
+              />
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr
             id="assign-agents-light"
-            *ngFor="let agent of showAgentsDataForTable"
-            [class]="agent.rowClass"
+            *ngFor="let agent of filterDataAgent"
+            [ngClass]="{ 'highlighted-row': isSelected(agent) }"
+            (click)="onRowClick(agent)"
           >
             <td></td>
             <td>
@@ -76,6 +112,8 @@
               <div>
                 {{ agent.taskName }}
               </div>
+            </td>
+
             <td>
               <div *ngFor="let group of agent.accessGroups">
                 {{ group.groupName }}
