@@ -15,9 +15,8 @@ import {
   QueryList,
 } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { DataTableDirective } from 'angular-datatables';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
-import { Subject,forkJoin, mergeMap, of } from 'rxjs';
+import { forkJoin, mergeMap, of } from 'rxjs';
 
 import { GlobalService } from 'src/app/core/_services/main.service';
 import { PageTitle } from 'src/app/core/_decorators/autotitle';
@@ -41,13 +40,10 @@ export class AssignGroupsComponent implements OnInit {
   private maxResults = environment.config.prodApiMaxResults;
   isFilterOpen = false;
   filterData: any = [];
+  filterDataAgent: any = [];
+  selectAllChecked = false;
   selectedStatus: string | undefined = undefined;
-  // Datatable
-  @ViewChild(DataTableDirective)
-  dtElement: DataTableDirective;
 
-  dtTrigger: Subject<any> = new Subject<any>();
-  dtTriggerAgents: Subject<any> = new Subject<any>();
   dtOptions: any = {};
   dtOptionsAgents: any = {};
 
@@ -78,150 +74,66 @@ export class AssignGroupsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const self = this;
     this.loadAccessGroups();
     this.loadAgentsData();
-    this.dtOptionsAgents = {
-      dom: 'Bfrtip',
-      scrollY: '700px',
-      scrollCollapse: true,
-      select: {
-        style: 'multi',
-      },
-      columnDefs: [
-        {
-          orderable: false,
-          className: 'select-checkbox',
-          targets: 0,
-        },
-      ],
-      order: [[1, 'asc']],
-      autoWidth: false,
-
-      lengthMenu: [
-        [10, 25, 50, -1],
-        ['10 rows', '25 rows', '50 rows', 'Show all rows'],
-      ],
-      pageLength: 10,
-      buttons: {
-        dom: {
-          button: {
-            className:
-              'dt-button buttons-collection btn btn-sm-dt btn-outline-gray-600-dt',
-          },
-        },
-        buttons: [
-          {
-            text: '↻',
-            autoClose: true,
-            action: function (e, dt, node, config) {
-              self.onRefresh();
-            },
-          },
-          {
-            extend: 'pageLength',
-            className: 'btn-sm',
-            titleAttr: 'Show number of rows',
-          },
-        ],
-      },
-
-      rowCallback: function (row, data, index) {
-        $(row).on('click', () => {
-          const rowId = data[1];
-          const rowName = data[2].toUpperCase();
-          const uniqueKey = `${rowId}-${rowName}`;
-
-          if (self.selectedData.has(uniqueKey)) {
-            self.selectedData.delete(uniqueKey);
-          } else {
-            self.selectedData.add(uniqueKey);
-          }
-
-          
-          self.updateSelectedData(Array.from(self.selectedData));
-        });
-      },
-    };
   }
 
+  onFilterClick() {
+    this.isFilterOpen = !this.isFilterOpen;
+  }
+  onRowClick(data: any) {
+    const rowId = data.agentId;
+    const rowName = data.agentName.toUpperCase();
+    const uniqueKey = `${rowId}-${rowName}`;
+
+    if (this.selectedData.has(uniqueKey)) {
+      this.selectedData.delete(uniqueKey);
+    } else {
+      this.selectedData.add(uniqueKey);
+    }
+
+    this.updateSelectedData(Array.from(this.selectedData));
+  }
+
+  isSelected(agent: any): boolean {
+    const uniqueKey = `${agent.agentId}-${agent.agentName.toUpperCase()}`;
+    return this.selectedData.has(uniqueKey);
+  }
   loadAgentsData() {
     const params = { maxResults: this.maxResults };
     const paramsAgent = { maxResults: this.maxResults, expand: 'accessGroups' };
     this.gs.getAll(SERV.AGENTS, paramsAgent).subscribe((agents: any) => {
-      this.gs.getAll(SERV.AGENT_ASSIGN,params).subscribe((assign: any) => {
-      this.gs.getAll(SERV.TASKS,params).subscribe((t: any)=>{
-
-      const getAData = agents.values.map(mainObject => {
-        const matchObjectTask = assign.values.find(e => e.agentId === mainObject.agentId)
-        return { ...mainObject, ...matchObjectTask}
-      })
-      const jointasks = getAData.map(mainObject => {
-        const matchObjectTask = t.values.find(e => e.taskId === mainObject.taskId)
-        return { ...mainObject, ...matchObjectTask}
-      })
-      this.showAgentsDataForTable = jointasks;
-
-      this.dtTriggerAgents.next(void 0);
+      this.gs.getAll(SERV.AGENT_ASSIGN, params).subscribe((assign: any) => {
+        this.gs.getAll(SERV.TASKS, params).subscribe((t: any) => {
+          const getAData = agents.values.map((mainObject) => {
+            const matchObjectTask = assign.values.find(
+              (e) => e.agentId === mainObject.agentId
+            );
+            return { ...mainObject, ...matchObjectTask };
+          });
+          const jointasks = getAData.map((mainObject) => {
+            const matchObjectTask = t.values.find(
+              (e) => e.taskId === mainObject.taskId
+            );
+            return { ...mainObject, ...matchObjectTask };
+          });
+          this.filterDataAgent = jointasks;
+          this.showAgentsDataForTable = jointasks;
+        });
+      });
     });
-  });
-});
   }
   loadAccessGroups() {
     const params = { expand: 'agentMembers' };
     this.gs.getAll(SERV.ACCESS_GROUPS, params).subscribe((agroups: any) => {
       this.agroups = agroups.values;
       this.filterData = agroups.values;
-      this.dtTrigger.next(void 0);
     });
-  }
-
-  previousSearchTerms: { [key: string]: string } = {};
-
-  search(term: any, key: string) {
-    const searchTerm =
-      (term.target as HTMLInputElement)?.value?.trim().toLowerCase() ?? '';
-
-    this.previousSearchTerms[key] = searchTerm;
-    if (searchTerm === '') {
-      delete this.previousSearchTerms[key];
-    }
-
-    this.filterData = this.agroups.filter((x) => {
-      const searchTermsMatch = Object.keys(this.previousSearchTerms).every(
-        (searchKey) => {
-          const searchValue = this.previousSearchTerms[searchKey];
-          switch (searchKey) {
-            case 'id':
-              return x.accessGroupId === parseInt(searchValue, 10);
-            case 'groupName':
-              return x.groupName.trim().toLowerCase().includes(searchValue);
-            default:
-              return true; // Don't filter on unknown keys
-          }
-        }
-      );
-
-      return searchTermsMatch;
-    });
-  }
-
-  onRefresh() {
-    this.rerender();
-    this.ngOnInit();
   }
 
   rerender(): void {
     this.selectedData = new Set();
     this.agentIds = [];
-    this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
-      // Destroy the table first
-      dtInstance.destroy();
-      // Call the dtTrigger to rerender again
-      setTimeout(() => {
-        this.dtTriggerAgents['new'].next();
-      });
-    });
   }
 
   onDelete(id: number) {
@@ -265,7 +177,7 @@ export class AssignGroupsComponent implements OnInit {
     });
   }
   onAdd() {
-    if (Array.isArray(this.agentIds)) {
+    if (Array.isArray(this.agentIds) && this.selectedGroup !== undefined) {
       const createObservables = this.agentIds.map((agentId) => {
         return this.gs.getAll(SERV.ACCESS_GROUPS_AGENTS).pipe(
           mergeMap((agroups: any) => {
@@ -275,26 +187,22 @@ export class AssignGroupsComponent implements OnInit {
                 ? agroup.agentId
                 : null
             );
-  
+
             if (!existingAgentIds.includes(agentId)) {
               const payload = {
                 accessGroupId: this.selectedGroup.accessGroupId,
                 agentId: agentId,
               };
-  
-             
+
               return this.gs.create(SERV.ACCESS_GROUPS_AGENTS, payload);
             } else {
-              
               return of(null);
             }
           })
         );
       });
-  
-      
+
       forkJoin(createObservables).subscribe(() => {
-      
         Swal.fire({
           title: 'Success',
           text: 'Access Group has been updated',
@@ -310,7 +218,7 @@ export class AssignGroupsComponent implements OnInit {
   }
 
   onRemove() {
-    if (Array.isArray(this.agentIds)) {
+    if (Array.isArray(this.agentIds) && this.selectedGroup !== undefined) {
       const deleteObservables = this.agentIds.map((agentId) => {
         return this.gs.getAll(SERV.ACCESS_GROUPS_AGENTS).pipe(
           mergeMap((agroups: any) => {
@@ -323,7 +231,7 @@ export class AssignGroupsComponent implements OnInit {
                 existingId = agroup.accessGroupAgentId;
               }
             });
-  
+
             if (existingId !== 0) {
               return this.gs.delete(SERV.ACCESS_GROUPS_AGENTS, existingId);
             } else {
@@ -332,25 +240,96 @@ export class AssignGroupsComponent implements OnInit {
           })
         );
       });
-  
-      forkJoin(deleteObservables).subscribe(() => {
-
-        Swal.fire({
-          title: 'Success',
-          icon: 'success',
-          showConfirmButton: false,
-          timer: 1500,
-        });
-        this.selectedGroup = this.filterData[0];
-        this.ngOnInit();
-        this.rerender();
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: 'btn',
+          cancelButton: 'btn',
+        },
+        buttonsStyling: false,
+      });
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'Once deleted, it can not be recovered!',
+        icon: 'warning',
+        reverseButtons: true,
+        showCancelButton: true,
+        cancelButtonColor: '#8A8584',
+        confirmButtonColor: '#C53819',
+        confirmButtonText: 'Yes, delete it!',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          forkJoin(deleteObservables).subscribe(() => {
+            Swal.fire({
+              title: 'Success',
+              icon: 'success',
+              showConfirmButton: false,
+              timer: 1500,
+            });
+            this.selectedGroup = this.filterData[0];
+            this.ngOnInit();
+            this.rerender();
+          });
+        } else {
+          swalWithBootstrapButtons.fire({
+            title: 'Cancelled',
+            text: 'Your Access Group is safe!',
+            icon: 'error',
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        }
       });
     }
   }
 
-  // Add unsubscribe to detect changes
-  ngOnDestroy() {
-    this.dtTrigger.unsubscribe();
-    this.dtTriggerAgents.unsubscribe();
+  previousSearchTerms: { [key: string]: string } = {};
+  //Search Filter
+  search(term: any, key: string) {
+    const searchTerm =
+      (term.target as HTMLInputElement)?.value?.trim().toLowerCase() ?? '';
+
+    this.previousSearchTerms[key] = searchTerm;
+    if (searchTerm === '') {
+      delete this.previousSearchTerms[key];
+    }
+
+    this.filterDataAgent = this.showAgentsDataForTable.filter((x) => {
+      const searchTermsMatch = Object.keys(this.previousSearchTerms).every(
+        (searchKey) => {
+          const searchValue = this.previousSearchTerms[searchKey];
+          switch (searchKey) {
+            case 'name':
+              return x.agentName.trim().toLowerCase().includes(searchValue);
+            case 'assignedTask':
+              return x.taskName.trim().toLowerCase().includes(searchValue);
+            case 'accessGroup':
+              // Check if any element in the accessGroup array includes the search term
+              return x.accessGroups.some((group) =>
+                group.groupName.trim().toLowerCase().includes(searchValue)
+              );
+
+            default:
+              return true; // Don't filter on unknown keys
+          }
+        }
+      );
+      return searchTermsMatch;
+    });
+  }
+
+  toggleSelectAll() {
+    this.selectAllChecked = !this.selectAllChecked;
+
+    if (this.selectAllChecked) {
+      this.selectedData.clear();
+      this.filterDataAgent.forEach((agent) => {
+        const uniqueKey = `${agent.agentId}-${agent.agentName.toUpperCase()}`;
+        this.selectedData.add(uniqueKey);
+      });
+    } else {
+      this.selectedData.clear();
+    }
+
+    this.updateSelectedData(Array.from(this.selectedData));
   }
 }
