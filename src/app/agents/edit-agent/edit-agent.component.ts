@@ -81,6 +81,7 @@ export class EditAgentComponent implements OnInit {
       'userId': new FormControl({value: '', disabled: true}),
       'agentName': new FormControl(''),
       'token': new FormControl({value: '', disabled: true}),
+      'mac': new FormControl(''),
       'cpuOnly': new FormControl(),
       'cmdPars': new FormControl(''),
       'ignoreErrors': new FormControl(''),
@@ -127,7 +128,13 @@ export class EditAgentComponent implements OnInit {
     for(let i=0; i < chunks.length; i++){
       tspent.push(Math.max(chunks[i].solveTime, chunks[i].dispatchTime)-chunks[i].dispatchTime);
     }
-    this.timespent = tspent.reduce((a, i) => a + i);
+    if(tspent.length > 0)
+      this.timespent = tspent.reduce((a, i) => a + i);
+  }
+
+  validateMac(mac) {
+    const regex = /^([0-9a-f]{2}[\.:-]){5}([0-9a-f]{2})$/i;
+    return regex.test(mac);
   }
 
   assignChunksInit(id: number){
@@ -192,8 +199,23 @@ export class EditAgentComponent implements OnInit {
   }
 
   onSubmit(){
+    if(this.updateForm.value['mac'] !== ""){
+      if(!this.validateMac(this.updateForm.value['mac'])){
+        Swal.fire({
+          title: "Invalid Mac Address",
+          html: "Mac Address should be in one of these Formats <br> AA:BB:CC:DD:EE or AA-BB-CC-DD-EE",
+          icon: "error",
+          showConfirmButton: false,
+          timer: 3500
+        });
+        return;
+      }
+    }
+      
     if (this.updateForm.valid) {
-      this.onUpdateAssign(this.updateAssignForm.value);
+      if(this.updateAssignForm.value['taskId'] !== "")
+        this.onUpdateAssign(this.updateAssignForm.value);
+
       const data = this.createTempSetting() ;
       this.gs.update(SERV.AGENTS,this.editedAgentIndex,data).subscribe(() => {
           Swal.fire({
@@ -275,6 +297,7 @@ export class EditAgentComponent implements OnInit {
         'cmdPars': new FormControl(result['cmdPars']),
         'ignoreErrors': new FormControl(result['ignoreErrors']),
         'isTrusted': new FormControl(result['isTrusted']),
+        'mac': new FormControl(result['mac']),
 
         'cpuTempLow': new FormControl(cpuTemp[0]),
         'cpuTempMid': new FormControl(cpuTemp[1]),
@@ -343,9 +366,6 @@ async getGraph(obj: object, status: number, name: string){
   if(ASC.CPU_UTIL === status){
     templabel = '%'
   }
-
-  // console.log(this.getTemp1());  //Min temp
-  // console.log(this.getTemp2());  //Max temp
 
   const data:any = obj;
   const arr = [];

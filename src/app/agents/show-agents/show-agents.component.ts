@@ -40,8 +40,11 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   dtTrigger: Subject<any> = new Subject<any>();
   dtOptions: any = {};
 
+  //used to check if agent has a Mac-Address before sending request
+  noMacAgents = [];
+
   //filter
-  isChecked = false;
+  isChecked = false; 
   isFilterOpen = false;
   filteredAgents: any[] = [];
   
@@ -71,7 +74,7 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
     private gs: GlobalService,
     private as: AgentStatusService,
   ) {}
-
+  
   ngOnInit(): void {
     const agentParams = {'maxResults': this.maxResults, 'expand':'accessGroups'}
     const aGroupParams = {'maxResults': this.maxResults}
@@ -80,6 +83,8 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       agents.values.forEach((agent) => {
         if(this.as.getWorkingStatus(agent))
           agent.isWorking = true;
+        if(agent.mac === "" || !agent.mac)
+          this.noMacAgents.push(agent);
       })
       this.showagents = agents.values;
       this.filteredAgents = agents.values;
@@ -203,6 +208,13 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
                   autoClose: true,
                   action: function ( e, dt, node, config ) {
                     self.shutdownAgents();
+                  }
+                },
+                {
+                  text: 'Start Agents (WoL)',
+                  autoClose: true,
+                  action: function ( e, dt, node, config ) {
+                    self.wolAgents();
                   }
                 },
                 {
@@ -395,7 +407,102 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
         this.rerender();
       });
     }
-  }  
+  }
+
+  wolAgents() {
+    const selectionnum = this.onSelectedAgents();
+    const agentIds = selectionnum.join(",");
+    const data = { agentIds: agentIds };
+    if (selectionnum.length == 0) {
+      Swal.fire({
+        title: "You haven't selected any Agent",
+        icon: 'error',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } else {
+      if(this.noMacAgents.length > 0){
+        const a = [];
+        this.noMacAgents.forEach((agent) => {
+          //checks for matching id and prevents duplicate entries
+          if(selectionnum.includes(agent.agentId) && !a.some((aAgent) => aAgent.agentId === agent.agentId)){
+            a.push(agent);
+          }
+        })
+
+        if(a.length > 0){
+          const text = "couldn't find a Mac-Address for the following Agents: <br>" + a.map((agent) => agent.agentName).join('<br>');
+          Swal.fire({
+            title: "Invalid Selection",
+            icon: "error",
+            html: text,
+            timer: null,
+            showConfirmButton: true
+          });
+          return;
+        }
+      }
+      
+      this.gs.create(SERV.WOL, data).subscribe((res) => {
+        let title: String;
+        let iconType: String;
+      
+        if (!res.data.error) {
+          title = "WakeOnLan command has been sent out";
+          iconType = "success";
+        } else {
+          title = res.data.error;
+          iconType = "error";
+        }
+        
+        Swal.fire({
+          title: title,
+          icon: iconType,
+          timer: 1500,
+          showConfirmButton: false
+        });
+        
+        this.ngOnInit();
+        this.rerender();
+      });
+    }
+  }
+
+  onWolAgent(agent) {
+    if(agent.mac === ""){
+      Swal.fire({
+        title: "Invalid Selection",
+        icon: "error",
+        text: "Couldn't find a Mac-Address for this agent",
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } else {
+      const data = { agentIds: `${agent.agentId}` };
+      this.gs.create(SERV.WOL, data).subscribe((res) => {
+        let title: String;
+        let iconType: String;
+      
+        if (!res.data.error) {
+          title = "WakeOnLan command has been sent out";
+          iconType = "success";
+        } else {
+          title = res.data.error;
+          iconType = "error";
+        }
+        
+        Swal.fire({
+          title: title,
+          icon: iconType,
+          timer: 1500,
+          showConfirmButton: false
+        });
+        
+        this.ngOnInit();
+        this.rerender();
+      });
+    }
+  }
 
   rerender(): void {
     this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {

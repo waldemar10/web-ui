@@ -521,6 +521,10 @@
               <button ngbDropdownItem data-toggle="tooltip" data-placement="top" title="Shutdown" (click)="onShutdownAgent(showagents[i].agentId)">
                 <fa-icon [icon]="faPowerOff" aria-hidden="true"></fa-icon> Shutdown
               </button>
+              <div class="dropdown-divider"></div>
+              <button ngbDropdownItem data-toggle="tooltip" data-placement="top" title="Shutdown" (click)="onWolAgent(showagents[i])">
+                Start Agent (WoL)
+              </button>
             </app-button-actions>
           </td>
         </tr>   

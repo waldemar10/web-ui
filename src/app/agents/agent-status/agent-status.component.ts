@@ -477,6 +477,42 @@ export class AgentStatusComponent implements OnInit {
     }
     ;
   }
+
+  onWolAgent(agent) {
+    if(agent.mac === ""){
+      Swal.fire({
+        title: "Invalid Selection",
+        icon: "error",
+        text: "Couldn't find a Mac-Address for this agent",
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } else {
+      const data = { agentIds: `${agent.agentId}` };
+      this.gs.create(SERV.WOL, data).subscribe((res) => {
+        let title: String;
+        let iconType: String;
+      
+        if (!res.data.error) {
+          title = "WakeOnLan command has been sent out";
+          iconType = "success";
+        } else {
+          title = res.data.error;
+          iconType = "error";
+        }
+        
+        Swal.fire({
+          title: title,
+          icon: iconType,
+          timer: 1500,
+          showConfirmButton: false
+        });
+        
+        this.ngOnInit();
+        this.rerender();
+      });
+    }
+  }
   
   onDelete(id: number){
       const swalWithBootstrapButtons = Swal.mixin({

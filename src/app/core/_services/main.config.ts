@@ -46,5 +46,6 @@ export class SERV {
   public static PROJECTS = '/ui/tasks';
   // Commands
   public static SHUTDOWN ='/ui/shutdown';
+  public static WOL ='/ui/wol';
 }
 
