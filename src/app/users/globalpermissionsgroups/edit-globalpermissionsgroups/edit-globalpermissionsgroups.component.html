@@ -101,6 +101,14 @@
                     </div>
                 </grid-form-input>
               </div>
+              <div class="col">
+                <grid-form-input [name]="'WakeOnLan'">
+                  <td>
+                    <div class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" formControlName="permAgentWakeOnLan">
+                    </div>
+                </grid-form-input>
+              </div>
               <hr>
               <h5>Agent Stats</h5>
               <div class="col">
@@ -140,6 +148,14 @@
                   <td>
                     <div class="form-check form-switch">
                         <input type="checkbox" class="form-check-input" formControlName="permAgentStatShutdown">
+                    </div>
+                </grid-form-input>
+              </div>
+              <div class="col">
+                <grid-form-input [name]="'WakeOnLan'">
+                  <td>
+                    <div class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" formControlName="permAgentStatWakeOnLan">
                     </div>
                 </grid-form-input>
               </div>
