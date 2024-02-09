@@ -83,6 +83,8 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
       agents.values.forEach((agent) => {
         if(this.as.getWorkingStatus(agent))
           agent.isWorking = true;
+        else
+          agent.isWorking = false;
         if(agent.mac === "" || !agent.mac)
           this.noMacAgents.push(agent);
       })
@@ -263,6 +265,8 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
           return agent.isActive;
         case "Inactive":
           return !agent.isActive;
+        case "Working":
+          return agent?.isWorking;
         case "All":
           return true;
         default:
@@ -335,17 +339,70 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
     }
   }
 
-  onShutdownAgent(id){
+  onShutdownAgent(agent){
     const timestamp = Math.floor(Date.now() / 1000); //timestamp in seconds
-    const data = {timestamp: timestamp, agentIds: `${id}`}
-    if(!id) {
+    const data = {timestamp: timestamp, agentIds: `${agent.agentId}`}
+    if(!agent.agentId) {
       Swal.fire({
         title: "You haven't selected any Agent",
         icon: 'error',
         timer: 1500,
         showConfirmButton: false
       })
-    } else {
+    }
+    else if (agent.isWorking) {
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: 'btn',
+          cancelButton: 'btn'
+        },
+        buttonsStyling: false
+      })
+      Swal.fire({
+        title: "Warning",
+        text: "The selected Agent is currently working on a Task",
+        icon: "warning",
+        reverseButtons: true,
+        showCancelButton: true,
+        cancelButtonColor: '#8A8584',
+        confirmButtonColor: '#C53819',
+        confirmButtonText: 'Yes, Shutdown!'
+      })
+      .then((result) => {
+        if (result.isConfirmed) {
+          this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
+            let title: String;
+            let iconType: String;
+            if (!res.data.error) {
+              title = "Shutdown command has been sent out";
+              iconType = "success";
+            } else {
+              title = res.data.error;
+              iconType = "error";
+            }
+            
+            Swal.fire({
+              title: title,
+              icon: iconType,
+              timer: 1500,
+              showConfirmButton: false
+            });
+      
+            this.ngOnInit();
+            this.rerender();
+          });
+        } else {
+          swalWithBootstrapButtons.fire({
+            title: "Cancelled",
+            text: "Shutdown Cancelled!",
+            icon: "error",
+            showConfirmButton: false,
+            timer: 1500
+          })
+        }
+      });
+    } 
+    else {
       this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
         let title: String;
         let iconType: String;
@@ -374,6 +431,8 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
   shutdownAgents() {
     const selectionnum = this.onSelectedAgents();
     const agentIds = selectionnum.join(",");
+    const workingAgentIds = this.showagents.filter(agent => agent.isWorking).map((agent) => agent.agentId);
+    const isWorkingAgentSelected = selectionnum.some((id) => workingAgentIds.includes(id));
     const timestamp = Math.floor(Date.now() / 1000); //timestamp in seconds
     const data = { timestamp: timestamp, agentIds: agentIds };
     if (selectionnum.length == 0) {
@@ -383,7 +442,59 @@ export class ShowAgentsComponent implements OnInit, OnDestroy {
         timer: 1500,
         showConfirmButton: false
       });
-    } else {
+    }else if (isWorkingAgentSelected) {
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: 'btn',
+          cancelButton: 'btn'
+        },
+        buttonsStyling: false
+      })
+      Swal.fire({
+        title: "Confirm Shutdown",
+        text: "Some selected Agents are working on a Task",
+        icon: "warning",
+        reverseButtons: true,
+        showCancelButton: true,
+        cancelButtonColor: '#8A8584',
+        confirmButtonColor: '#C53819',
+        confirmButtonText: 'Yes, Shutdown!'
+      })
+      .then((result) => {
+        if (result.isConfirmed) {
+          this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
+            let title: String;
+            let iconType: String;
+            if (!res.data.error) {
+              title = "Shutdown command has been sent out";
+              iconType = "success";
+            } else {
+              title = res.data.error;
+              iconType = "error";
+            }
+            
+            Swal.fire({
+              title: title,
+              icon: iconType,
+              timer: 1500,
+              showConfirmButton: false
+            });
+      
+            this.ngOnInit();
+            this.rerender();
+          });
+        } else {
+          swalWithBootstrapButtons.fire({
+            title: "Cancelled",
+            text: "Shutdown Cancelled!",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 1500
+          })
+        }
+      });
+    } 
+    else {
       this.gs.create(SERV.SHUTDOWN, data).subscribe((res) => {
         let title: String;
         let iconType: String;

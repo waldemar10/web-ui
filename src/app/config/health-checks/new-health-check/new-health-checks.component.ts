@@ -54,6 +54,8 @@ export class NewHealthChecksComponent implements OnInit {
         agent.selected = false;
         if(this.as.getWorkingStatus(agent))
           agent.isWorking = true;
+        else
+          agent.isWorking = false;
       })
       this.getEligibleAgentsForCheck(tempAgents, +agentResponseTime);
     });
