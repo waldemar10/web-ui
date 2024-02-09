@@ -317,9 +317,9 @@
               </ngb-panel>
             </ngb-accordion>
           <span *ngIf="!createForm.valid && createForm.touched" class="help-block" >Please complete all the form!</span><br>
-          <div class="alert alert-warning" *ngIf="notTrustedAgent">At least one agent is not trustworthy</div>
+          <div class="alert alert-warning" *ngIf="!trustedAgent">At least one agent is not trustworthy</div>
           <div class="alert alert-danger" *ngIf="!sameAccessGroup">Agent & Hashlist dont have the same access group.</div>
-          <button-submit [name]="'Create'"></button-submit>
+          <button-submit [name]="'Create'" [disabled]="!trustedAgent || !sameAccessGroup"></button-submit>
       </form>
     </grid-main>
   </div>

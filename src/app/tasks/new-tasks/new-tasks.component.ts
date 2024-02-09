@@ -56,7 +56,7 @@ export class NewTasksComponent implements OnInit {
   createForm: FormGroup;
 
   needTrusted = false;
-  notTrustedAgent = false;
+  trustedAgent = true;
   sameAccessGroup = true;
 
   hashlistAccessGroup: any;
@@ -551,15 +551,19 @@ export class NewTasksComponent implements OnInit {
     this.gs.getAll(SERV.AGENTS).subscribe((agents: any) => {
 
     const notTrustedAgentFound = agents.values.some(agent => {
-      return (this.agentIds.includes(agent.agentId) && agent.isTrusted === false); 
+      return (this.agentIds.includes(agent.agentId) && agent.isTrusted === false);
     });
 
-    this.notTrustedAgent = notTrustedAgentFound;
+    if(notTrustedAgentFound === true){
+    this.trustedAgent = false;
+    }else{
+    this.trustedAgent = true
+    }
     });
   }
   else
   {
-    this.notTrustedAgent = false;
+    this.trustedAgent = true;
   }
   }
   }
@@ -597,11 +601,13 @@ export class NewTasksComponent implements OnInit {
     }
   }
   onSubmit(){
-    
-    if(this.needTrusted === true && this.notTrustedAgent === false && this.sameAccessGroup === true){
+    // If the task needs to be trusted and the agents are trusted
+    if(this.needTrusted === true && this.trustedAgent === true && this.sameAccessGroup === true){
     if (this.createForm.valid) {     
       this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
         const taskId = response.taskId; //Get the current task id
+          // Assign agents to the task
+          this.assignAgents(taskId); 
           Swal.fire({
             title: "Success",
             text: "New Task created!",
@@ -609,14 +615,13 @@ export class NewTasksComponent implements OnInit {
             showConfirmButton: false,
             timer: 1500
           });
-          this.assignAgents(taskId);   
         }
       );
     }
   }else if (this.needTrusted === false && this.sameAccessGroup === true){
     if (this.createForm.valid) {     
       this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
-        const taskId = response.taskId; //Get the current task id
+        const taskId = response.taskId; 
           Swal.fire({
             title: "Success",
             text: "New Task created!",
@@ -624,7 +629,7 @@ export class NewTasksComponent implements OnInit {
             showConfirmButton: false,
             timer: 1500
           });
-          this.assignAgents(taskId);   
+          this.assignAgents(taskId);  
         }
       );
     }
@@ -643,14 +648,20 @@ export class NewTasksComponent implements OnInit {
           icon: "success",
           showConfirmButton: false,
           timer: 1500
+        }).then(() => {
+          this.createForm.reset();
+          this.router.navigate(['tasks/show-tasks']);
+        
         });
-        this.router.navigate(['tasks/show-tasks']);
+         
     });
   });
   }else{
     const payload = {"taskId":taskId,"agentId":this.agentIds};
     this.gs.create(SERV.AGENT_ASSIGN,payload);
+    this.createForm.reset();
     this.router.navigate(['tasks/show-tasks']);
+    
       }
   }
   // Copied from Task
