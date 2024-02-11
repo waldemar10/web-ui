@@ -230,21 +230,37 @@ export class UsersComponent implements  OnInit {
   }
 
   readCSV(file: File): void {
+    // Create a FileReader to read the contents of the file
     const reader: FileReader = new FileReader();
-
+  
+    // Set up the onload event handler
     reader.onload = (e: any) => {
+      // Store the content of the file in the 'content' variable
       this.content = e.target.result;
+  
+      // Display the table for the CSV data
       this.showTable = true;
+  
+      // Extract data from the content and store it in 'userData'
       this.userData = this.extractDataFromContent(this.content);
+  
+      // Reset nameUsed
       this.nameUsed = false;
+  
+      // Process each user data entry
       this.userData.forEach((ud: any) => {
+        // Set globalPermissionGroupId based on the group in the CSV
         ud.globalPermissionGroupId = this.checkPermissionGroup(ud.group);
+  
+        // Check if the username exists in the CSV
         this.checkUserNameExistInCsv(ud.name);
       });
-      
+  
+      // Trigger change detection to update the view
       this.cdRef.detectChanges();
     };
-    
+  
+    // Read the file as text
     reader.readAsText(file);
   }
   
