@@ -1,5 +1,22 @@
-import { faEdit, faRefresh, faPauseCircle, faInfoCircle, faUserSecret, faTasks, faTasksAlt, faChainBroken, faCalendarWeek, faCalendarDay, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { TitleComponent, CalendarComponent, TooltipComponent, VisualMapComponent } from 'echarts/components';
+import {
+  faEdit,
+  faRefresh,
+  faPauseCircle,
+  faInfoCircle,
+  faUserSecret,
+  faTasks,
+  faTasksAlt,
+  faChainBroken,
+  faCalendarWeek,
+  faCalendarDay,
+  faCheckCircle,
+} from '@fortawesome/free-solid-svg-icons';
+import {
+  TitleComponent,
+  CalendarComponent,
+  TooltipComponent,
+  VisualMapComponent,
+} from 'echarts/components';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { environment } from 'src/environments/environment';
@@ -14,7 +31,11 @@ import { PageTitle } from 'src/app/core/_decorators/autotitle';
 import { SERV } from '../core/_services/main.config';
 import { CookieService } from '../core/_services/shared/cookies.service';
 
-import { ModalDismissReasons, NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
+import {
+  ModalDismissReasons,
+  NgbModal,
+  NgbModalRef,
+} from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup } from '@angular/forms';
 import Swal from 'sweetalert2/dist/sweetalert2.js';
 
@@ -28,21 +49,21 @@ export class HomeComponent implements OnInit {
 
   username = 'Admin';
 
-  faCalendarWeek=faCalendarWeek;
-  faChainBroken=faChainBroken;
-  faCheckCircle=faCheckCircle;
-  faCalendarDay=faCalendarDay;
-  faPauseCircle=faPauseCircle;
-  faInfoCircle=faInfoCircle;
-  faUserSecret=faUserSecret;
-  faTasksAlt=faTasksAlt;
-  faRefresh=faRefresh;
-  faTasks=faTasks;
-  faEdit=faEdit;
+  faCalendarWeek = faCalendarWeek;
+  faChainBroken = faChainBroken;
+  faCheckCircle = faCheckCircle;
+  faCalendarDay = faCalendarDay;
+  faPauseCircle = faPauseCircle;
+  faInfoCircle = faInfoCircle;
+  faUserSecret = faUserSecret;
+  faTasksAlt = faTasksAlt;
+  faRefresh = faRefresh;
+  faTasks = faTasks;
+  faEdit = faEdit;
 
-  faGithub=faGithub;
+  faGithub = faGithub;
 
-  getUsername(){
+  getUsername() {
     return this.username;
   }
 
@@ -58,66 +79,70 @@ export class HomeComponent implements OnInit {
   topTasks: any = [];
 
   private maxResults = environment.config.prodApiMaxResults;
-  storedAutorefresh: any =[]
+  storedAutorefresh: any = [];
   private updateSubscription: Subscription;
-  public punchCardOpts = {}
-  public punchCardOptss = {}
+  public punchCardOpts = {};
+  public punchCardOptss = {};
 
   settingsForm: FormGroup;
-  numOfTasks = this.getChartSettings("numOfTasks");
-  showColor = this.getChartSettings("showColor");
+  numOfTasks = this.getChartSettings('numOfTasks');
+  showColor = this.getChartSettings('showColor');
 
   constructor(
     private gs: GlobalService,
     private cs: CookieService,
     private modalService: NgbModal,
-    private as: AgentStatusService,
+    private as: AgentStatusService
   ) {}
 
   private modalRef: NgbModalRef;
 
   ngOnInit(): void {
-
     this.settingsForm = new FormGroup({
       showColor: new FormControl(this.showColor),
       numberOfTasks: new FormControl(this.numOfTasks),
-  });
+    });
 
     this.initData();
     this.storedAutorefresh = this.getAutoreload();
     this.onAutorefresh();
   }
 
-  onAutorefresh(){
-    if(this.storedAutorefresh.active == true){
+  onAutorefresh() {
+    if (this.storedAutorefresh.active == true) {
       setTimeout(() => {
-        window.location.reload()
-      },this.storedAutorefresh.value*1000);
+        window.location.reload();
+      }, this.storedAutorefresh.value * 1000);
     }
   }
 
   // Manage Auto reload
-  setAutoreload(value: any){
+  setAutoreload(value: any) {
     const set = Number(this.storedAutorefresh.value);
     let val;
-    if(value == false){
+    if (value == false) {
       val = true;
-    }if(value == true){
+    }
+    if (value == true) {
       val = false;
     }
-    this.cs.setCookie('autorefresh', JSON.stringify({active:val, value: set}), 365);
+    this.cs.setCookie(
+      'autorefresh',
+      JSON.stringify({ active: val, value: set }),
+      365
+    );
     this.ngOnInit();
   }
 
-  getAutoreload(){
+  getAutoreload() {
     return JSON.parse(this.cs.getCookie('autorefresh'));
   }
 
   getWorkingAgentIds(data: any): number[] {
     const filteredAgentIds: number[] = [];
     if (data.length > 0) {
-      data.forEach(task => {
-        task.assignedAgents.forEach(agent => {
+      data.forEach((task) => {
+        task.assignedAgents.forEach((agent) => {
           if (task.progress !== 100 && this.as.getWorkingStatus(agent)) {
             filteredAgentIds.push(agent._id);
           }
@@ -125,13 +150,13 @@ export class HomeComponent implements OnInit {
       });
     }
     return filteredAgentIds;
-  }  
+  }
 
   timeCalc(chunks, task) {
     let cprogress = [];
     let timespent = [];
     const current = 0;
-  
+
     for (let i = 0; i < chunks.length; i++) {
       cprogress.push(chunks[i].checkpoint - chunks[i].skip);
       if (chunks[i].dispatchTime > current) {
@@ -140,32 +165,40 @@ export class HomeComponent implements OnInit {
         timespent.push(chunks[i].solveTime - current);
       }
     }
-  
+
     const totalCProgress = cprogress.reduce((a, i) => a + i, 0);
     const totalTimespent = timespent.reduce((a, i) => a + i, 0);
-  
+
     if (totalCProgress !== 0 && totalTimespent !== 0 && task.keyspace !== 0) {
-      const estimated = (totalTimespent / (totalCProgress / task.keyspace) - totalTimespent);
+      const estimated =
+        totalTimespent / (totalCProgress / task.keyspace) - totalTimespent;
       task.remainingTime = estimated;
-      task.progress = parseFloat((totalCProgress / task.keyspace * 100).toFixed(2));
+      task.progress = parseFloat(
+        ((totalCProgress / task.keyspace) * 100).toFixed(2)
+      );
     } else {
-      task.remainingTime = "N/A";
-      task.progress = 0; 
+      task.remainingTime = 'N/A';
+      task.progress = 0;
     }
   }
-  
+
   getTopXTasks(arr: any[], x: number) {
-    const observables = arr.map(task => {
-      return this.gs.getAll(SERV.CHUNKS, {'maxResults': this.maxResults, 'filter': 'taskId=' + task.taskId + ''});
+    const observables = arr.map((task) => {
+      return this.gs.getAll(SERV.CHUNKS, {
+        maxResults: this.maxResults,
+        filter: 'taskId=' + task.taskId + '',
+      });
     });
-    
+
     //Makes sure all async calls are completed
     forkJoin(observables).subscribe((results: any[]) => {
       results.forEach((result, index) => {
         this.timeCalc(result.values, arr[index]);
       });
-      
-      const sortedArray = arr.filter(task => task.progress >= 0 && task.progress < 100);
+
+      const sortedArray = arr.filter(
+        (task) => task.progress >= 0 && task.progress < 100
+      );
       sortedArray.sort((a, b) => a.progress - b.progress);
       this.topTasks = sortedArray.slice(0, Math.min(sortedArray.length, x));
     });
@@ -187,40 +220,45 @@ export class HomeComponent implements OnInit {
   }
 
   private getDismissReason(reason: any): string {
-		if (reason === ModalDismissReasons.ESC) {
-			return 'by pressing ESC';
-		} else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
-			return 'by clicking on a backdrop';
-		} else {
-			return `with: ${reason}`;
-		}
-	}
+    if (reason === ModalDismissReasons.ESC) {
+      return 'by pressing ESC';
+    } else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
+      return 'by clicking on a backdrop';
+    } else {
+      return `with: ${reason}`;
+    }
+  }
 
   onSubmit() {
     const taskNum = this.settingsForm.value.numberOfTasks;
-    if (taskNum > 0 && taskNum <= 10) {
+    if (taskNum > 0) {
       this.showColor = this.settingsForm.value.showColor;
       this.numOfTasks = taskNum;
 
-      localStorage.setItem('chartSettings', JSON.stringify({ showColor: this.showColor, numOfTasks: this.numOfTasks }));
+      localStorage.setItem(
+        'chartSettings',
+        JSON.stringify({
+          showColor: this.showColor,
+          numOfTasks: this.numOfTasks,
+        })
+      );
       this.ngOnInit();
 
       Swal.fire({
-        title: "Success",
-        text: "Chart Updated!",
-        icon: "success",
+        title: 'Success',
+        text: 'Chart Updated!',
+        icon: 'success',
         showConfirmButton: false,
-        timer: 1500
+        timer: 1500,
       });
       this.modalRef.close('Save click');
-    }
-    else {
+    } else {
       Swal.fire({
-        title: "Invalid Input",
-        text: "Number of Tasks has to be between 1 and 10",
-        icon: "error",
+        title: 'Invalid Input',
+        text: 'Number of Tasks has to be at least 1',
+        icon: 'error',
         showConfirmButton: false,
-        timer: 1500
+        timer: 1500,
       });
     }
   }
@@ -228,70 +266,82 @@ export class HomeComponent implements OnInit {
   getChartSettings(key: string) {
     const settings = localStorage.getItem('chartSettings');
 
-    if(!settings)
-      return key === "showColor" ? true : 3;
+    if (!settings) return key === 'showColor' ? true : 3;
     else {
       const s = JSON.parse(settings);
-      return key === "showColor" ? s.showColor : s.numOfTasks;
+      return key === 'showColor' ? s.showColor : s.numOfTasks;
     }
   }
 
   initData() {
-
     // Agents
-    const params = {'maxResults': this.maxResults}
-    const paramst = {'maxResults': this.maxResults, 'expand': 'assignedAgents'}
+    const params = { maxResults: this.maxResults };
+    const paramst = { maxResults: this.maxResults, expand: 'assignedAgents' };
 
-    this.gs.getAll(SERV.AGENTS,params).subscribe((agents: any) => {
-      this.gs.getAll(SERV.TASKS,paramst).subscribe((tasks: any) => {
+    this.gs.getAll(SERV.AGENTS, params).subscribe((agents: any) => {
+      this.gs.getAll(SERV.TASKS, paramst).subscribe((tasks: any) => {
         let tempWorkingAgents;
-        let unArchivedTasks = tasks.values.filter(u=> u.isArchived != true)
+        let unArchivedTasks = tasks.values.filter((u) => u.isArchived != true);
 
         this.totalTasks = unArchivedTasks.length;
         tempWorkingAgents = this.getWorkingAgentIds(unArchivedTasks);
         this.workingAgents = tempWorkingAgents.length;
 
         this.allAgents = agents.values.length;
-        this.activeAgents = agents.values.filter(u => u.isActive == true && !tempWorkingAgents.includes(u.agentId)).length;
-        this.inactiveAgents = agents.values.filter(u => u.isActive == false).length;
-      
+        this.activeAgents = agents.values.filter(
+          (u) => u.isActive == true && !tempWorkingAgents.includes(u.agentId)
+        ).length;
+        this.inactiveAgents = agents.values.filter(
+          (u) => u.isActive == false
+        ).length;
+
         this.getTopXTasks(tasks.values, this.numOfTasks);
       });
     });
 
     // SuperTasks
-    this.gs.getAll(SERV.SUPER_TASKS,params).subscribe((stasks: any) => {
+    this.gs.getAll(SERV.SUPER_TASKS, params).subscribe((stasks: any) => {
       this.allsupertasks = stasks.total | 0;
     });
-    	
-    // Cracks
-    const paramsCracked = {'maxResults': this.maxResults }
 
-    this.gs.getAll(SERV.HASHLISTS,paramsCracked).subscribe((hashes: any) => {
-      let lastseven:any = new Date() ;
-      lastseven = lastseven.setDate(lastseven.getDate() - 7).valueOf()/1000;
-      const lastsevenObject = hashes.values.filter(u=> (u.isCracked == true && u.timeCracked > lastseven ));
+    // Cracks
+    const paramsCracked = { maxResults: this.maxResults };
+
+    this.gs.getAll(SERV.HASHLISTS, paramsCracked).subscribe((hashes: any) => {
+      let lastseven: any = new Date();
+      lastseven = lastseven.setDate(lastseven.getDate() - 7).valueOf() / 1000;
+      const lastsevenObject = hashes.values.filter(
+        (u) => u.isCracked == true && u.timeCracked > lastseven
+      );
       this.totalCracks = lastsevenObject.length | 0;
       this.initCrackCard(hashes.values);
     });
-
   }
 
   // Graphs Section
 
-  initCrackCard(obj: any){
-
+  initCrackCard(obj: any) {
     const date_today = new Date();
-    const year = (new Date()).getFullYear();
-    const first_day_of_the_week = new Date(date_today.setDate(date_today.getDate() - date_today.getDay() ));
-    const epochtime = Math.round(first_day_of_the_week.setDate(first_day_of_the_week.getDate()).valueOf()/1000);
+    const year = new Date().getFullYear();
+    const first_day_of_the_week = new Date(
+      date_today.setDate(date_today.getDate() - date_today.getDay())
+    );
+    const epochtime = Math.round(
+      first_day_of_the_week.setDate(first_day_of_the_week.getDate()).valueOf() /
+        1000
+    );
 
-    const filterdate = obj.filter(u=> (u.isCracked == true ));
+    const filterdate = obj.filter((u) => u.isCracked == true);
 
     const arr = [];
-    for(let i=0; i < filterdate.length; i++){
-      const date:any = new Date(filterdate[i]['timeCracked']* 1000);
-      const iso = date.getUTCFullYear()+'-'+(date.getUTCMonth() + 1)+'-'+date.getUTCDate();
+    for (let i = 0; i < filterdate.length; i++) {
+      const date: any = new Date(filterdate[i]['timeCracked'] * 1000);
+      const iso =
+        date.getUTCFullYear() +
+        '-' +
+        (date.getUTCMonth() + 1) +
+        '-' +
+        date.getUTCDate();
       arr.push([iso]);
     }
 
@@ -304,8 +354,8 @@ export class HomeComponent implements OnInit {
       return p;
     }, {});
 
-    const countsExtended = Object.keys(counts).map(k => {
-      return [k, counts[k]]
+    const countsExtended = Object.keys(counts).map((k) => {
+      return [k, counts[k]];
     }, {});
 
     echarts.use([
@@ -314,7 +364,7 @@ export class HomeComponent implements OnInit {
       TooltipComponent,
       VisualMapComponent,
       HeatmapChart,
-      CanvasRenderer
+      CanvasRenderer,
     ]);
 
     const chartDom = document.getElementById('pcard');
@@ -330,9 +380,13 @@ export class HomeComponent implements OnInit {
       tooltip: {
         position: 'top',
         formatter: function (p) {
-          const format = echarts.time.format(p.data[0], '{dd}-{MM}-{yyyy}', false);
+          const format = echarts.time.format(
+            p.data[0],
+            '{dd}-{MM}-{yyyy}',
+            false
+          );
           return format + ': ' + p.data[1];
-        }
+        },
       },
       visualMap: {
         min: 0,
@@ -340,7 +394,7 @@ export class HomeComponent implements OnInit {
         type: 'piecewise',
         orient: 'horizontal',
         left: 'center',
-        top: 65
+        top: 65,
       },
       calendar: {
         top: 120,
@@ -349,9 +403,9 @@ export class HomeComponent implements OnInit {
         cellSize: ['auto', 13],
         range: year,
         itemStyle: {
-          borderWidth: 0.5
+          borderWidth: 0.5,
         },
-        yearLabel: { show: false }
+        yearLabel: { show: false },
       },
       series: {
         type: 'heatmap',
@@ -360,17 +414,15 @@ export class HomeComponent implements OnInit {
         label: {
           show: true,
           formatter: function (p) {
-            if(date_today.getDate() == p.data[0]){
+            if (date_today.getDate() == p.data[0]) {
               return 'X';
-            }
-            else{
+            } else {
               return '';
             }
-          }
+          },
         },
-      }
+      },
     };
     option && myChart.setOption(option);
   }
 }
-
