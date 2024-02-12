@@ -263,50 +263,54 @@ export class ShowTasksComponent implements OnInit {
 
   previousSearchTerms: { [key: string]: string } = {};
 
-  search(term: any, key: string) {
-    const searchTerm =
-      (term.target as HTMLInputElement)?.value?.trim().toLowerCase() ?? '';
+search(term: any, key: string) {
+  // Get the trimmed and lowercase search term from the input field
+  const searchTerm = (term.target as HTMLInputElement)?.value?.trim().toLowerCase() ?? '';
 
-    this.previousSearchTerms[key] = searchTerm;
-    if (searchTerm === '') {
-      delete this.previousSearchTerms[key];
-    }
+  // Save the current search term in the previousSearchTerms object
+  this.previousSearchTerms[key] = searchTerm;
 
-    this.filterData = this.alltasks.filter((x) => {
-      const dropdownFiltersMatch =
-        this.applyStatusFilter(x, this.selectedStatus) &&
-        this.applyInfoPlusFilter(x, this.selectedInfoPlus);
-
-      const searchTermsMatch = Object.keys(this.previousSearchTerms).every(
-        (searchKey) => {
-          const searchValue = this.previousSearchTerms[searchKey];
-          switch (searchKey) {
-            case 'taskId':
-              return x.taskId === parseInt(searchValue, 10);
-            case 'taskName':
-              return x.taskName.trim().toLowerCase().includes(searchValue);
-            case 'hashlistName':
-              return x.hashlist[0].name
-                .trim()
-                .toLowerCase()
-                .includes(searchValue);
-            case 'cracked':
-              return x.hashlist[0].cracked === parseInt(searchValue, 10);
-            case 'agents':
-              return x.assignedAgents.length === parseInt(searchValue, 10);
-            case 'priority':
-              return x.priority === parseInt(searchValue, 10);
-            case 'maxAgents':
-              return x.maxAgents === parseInt(searchValue, 10);
-            default:
-              return true; // Don't filter on unknown keys
-          }
-        }
-      );
-
-      return dropdownFiltersMatch && searchTermsMatch;
-    });
+  // If the search term is empty, remove it from the previousSearchTerms object
+  if (searchTerm === '') {
+    delete this.previousSearchTerms[key];
   }
+
+  // Filter the data based on selected dropdown filters and search terms
+  this.filterData = this.alltasks.filter((x) => {
+    // Check if the status and infoPlus dropdown filters match
+    const dropdownFiltersMatch =
+      this.applyStatusFilter(x, this.selectedStatus) &&
+      this.applyInfoPlusFilter(x, this.selectedInfoPlus);
+
+    // Check if search terms match for all keys in previousSearchTerms
+    const searchTermsMatch = Object.keys(this.previousSearchTerms).every((searchKey) => {
+      const searchValue = this.previousSearchTerms[searchKey];
+
+      // Use a switch statement to handle different search keys
+      switch (searchKey) {
+        case 'taskId':
+          return x.taskId === parseInt(searchValue, 10);
+        case 'taskName':
+          return x.taskName.trim().toLowerCase().includes(searchValue);
+        case 'hashlistName':
+          return x.hashlist[0].name.trim().toLowerCase().includes(searchValue);
+        case 'cracked':
+          return x.hashlist[0].cracked === parseInt(searchValue, 10);
+        case 'agents':
+          return x.assignedAgents.length === parseInt(searchValue, 10);
+        case 'priority':
+          return x.priority === parseInt(searchValue, 10);
+        case 'maxAgents':
+          return x.maxAgents === parseInt(searchValue, 10);
+        default:
+          return true; // Don't filter on unknown keys
+      }
+    });
+
+    // Return true if both dropdown filters and search terms match
+    return dropdownFiltersMatch && searchTermsMatch;
+  });
+}
 
   applyStatusFilter(x: any, selectedStatus: string): boolean {
     switch (selectedStatus) {
@@ -445,90 +449,91 @@ export class ShowTasksComponent implements OnInit {
         ref.componentInstance.title = name;
       });
   }
-  onPause(task: any) {
-    // Pause all Agents assigned to the task
-    if (task.assignedAgents.length > 0) {
 
-      const swalWithBootstrapButtons = Swal.mixin({
-        customClass: {
-          confirmButton: 'btn',
-          cancelButton: 'btn',
-        },
-        buttonsStyling: false,
-      });
-      Swal.fire({
-        title: 'Are you sure?',
-        text: 'The chunks that are currently being processed are not completed.',
-        icon: 'warning',
-        reverseButtons: true,
-        showCancelButton: true,
-        cancelButtonColor: '#8A8584',
-        confirmButtonColor: '#C53819',
-        confirmButtonText: 'Yes, pause!',
-      }).then((result) => {
-        if (result.isConfirmed) {
+onPause(task: any) {
+  // Check if there are assigned agents to the task
+  if (task.assignedAgents.length > 0) {
+    
+    // Set up Swal with customized styling
+    const swalWithBootstrapButtons = Swal.mixin({
+      customClass: {
+        confirmButton: 'btn',
+        cancelButton: 'btn',
+      },
+      buttonsStyling: false,
+    });
 
+    // Show confirmation dialog before proceeding with pausing
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'The chunks that are currently being processed are not completed.',
+      icon: 'warning',
+      reverseButtons: true,
+      showCancelButton: true,
+      cancelButtonColor: '#8A8584',
+      confirmButtonColor: '#C53819',
+      confirmButtonText: 'Yes, pause!',
+    }).then((result) => {
+      // Check if user confirmed the pause action
+      if (result.isConfirmed) {
+        // Set the priority to 0 for the task and its wrapper
+        let updatePriority = { priority: +0 };
+        const updateTaskObservable = this.gs.update(SERV.TASKS, task.taskId, updatePriority);
+        const updateTaskWrapperObservable = this.gs.update(SERV.TASKS_WRAPPER, task.taskWrapperId, updatePriority);
 
-      // Set the priority to 0
-      let updatePriority = { priority: +0 };
-      const updateTaskObservable = this.gs.update(
-        SERV.TASKS,
-        task.taskId,
-        updatePriority
-      );
-      const updateTaskWrapperObservable = this.gs.update(
-        SERV.TASKS_WRAPPER,
-        task.taskWrapperId,
-        updatePriority
-      );
-      
-      // Set all Agents assigned to the task to active
-      task.assignedAgents.map((t: any) => {
-        const updateAgent = { isActive: false };
-        this.gs.update(SERV.AGENTS, t.agentId, updateAgent).subscribe(
-           //
-      );
-      });
+        // Set all Agents assigned to the task to inactive
+        task.assignedAgents.forEach((t: any) => {
+          const updateAgent = { isActive: false };
+          this.gs.update(SERV.AGENTS, t.agentId, updateAgent).subscribe(
+             //
+          );
+        });
 
-      forkJoin({
-        taskResult: updateTaskObservable,
-        taskWrapperResult: updateTaskWrapperObservable,
-      }).subscribe({
-        next: ({ taskResult, taskWrapperResult }) => {
-          Swal.fire({
-            title: 'Success',
-            text: 'Active!',
-            icon: 'success',
-            showConfirmButton: false,
-            timer: 1500,
-          });
-          this.isPaused = true;
-          this.ngOnInit();
-          this.rerender();
-        },
-        error: (error) => {
-          Swal.fire({
-            title: 'Error',
-            text: 'Error when pausing the task ' + error,
-            icon: 'error',
-            showConfirmButton: false,
-            timer: 1500,
-          });
-          console.log('Error when pausing the task: ' + error);
-        },
-      });
-    }
-    else {
-      swalWithBootstrapButtons.fire({
-        title: 'Cancelled',
-        text: 'Cancelled pause task!',
-        icon: 'error',
-        showConfirmButton: false,
-        timer: 1500,
-      });
-    }});
-    }
+        // Use forkJoin to wait for both task and wrapper updates
+        forkJoin({
+          taskResult: updateTaskObservable,
+          taskWrapperResult: updateTaskWrapperObservable,
+        }).subscribe({
+          next: ({ taskResult, taskWrapperResult }) => {
+            // Display success message if both updates are successful
+            Swal.fire({
+              title: 'Success',
+              text: 'Active!',
+              icon: 'success',
+              showConfirmButton: false,
+              timer: 1500,
+            });
+            // Update the state variables
+            this.isPaused = true;
+            this.ngOnInit();
+            this.rerender();
+          },
+          error: (error) => {
+            // Display error message if there's an issue with updating the task
+            Swal.fire({
+              title: 'Error',
+              text: 'Error when pausing the task ' + error,
+              icon: 'error',
+              showConfirmButton: false,
+              timer: 1500,
+            });
+         
+            console.log('Error when pausing the task: ' + error);
+          },
+        });
+      } else {
+        // Display cancellation message if the user cancels the pause action
+        swalWithBootstrapButtons.fire({
+          title: 'Cancelled',
+          text: 'Cancelled pause task!',
+          icon: 'error',
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    });
   }
+}
 
   onStart(task: any) {
     // Set all Agents assigned to the task to active

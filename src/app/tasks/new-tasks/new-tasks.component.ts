@@ -56,7 +56,7 @@ export class NewTasksComponent implements OnInit {
   createForm: FormGroup;
 
   needTrusted = false;
-  notTrustedAgent = false;
+  trustedAgent = true;
   sameAccessGroup = true;
 
   hashlistAccessGroup: any;
@@ -545,41 +545,53 @@ export class NewTasksComponent implements OnInit {
       this.createForm.get('crackerBinaryTypeId').patchValue(lastItem);
     });
   }
-  checkIfAgentIsTrusted(){
-    if(this.agentIds !== undefined){
-    if(this.needTrusted === true){
-    this.gs.getAll(SERV.AGENTS).subscribe((agents: any) => {
+  checkIfAgentIsTrusted() {
+    // Check if agentIds is defined
+    if (this.agentIds !== undefined) {
+        // Check if trusted status is required
+        if (this.needTrusted) {
+            // Fetch all agents from the server
+            this.gs.getAll(SERV.AGENTS).subscribe((agents: any) => {
+                // Check if there are agents in the response
+                const notTrustedAgentFound = agents.values.some(agent =>
+                    // Check if the current agentId is in the provided list and is not trusted
+                    this.agentIds.includes(agent.agentId) && !agent.isTrusted
+                );
+                // Set trustedAgent based on whether any not trusted agent is found
+                this.trustedAgent = !notTrustedAgentFound;
+            });
+        } else {
+            // If trusted status is not required, set trustedAgent to true
+            this.trustedAgent = true;
+        }
+    } else {
+        // If agentIds is undefined, set trustedAgent to true
+        this.trustedAgent = true;
+    }
+}
 
-    const notTrustedAgentFound = agents.values.some(agent => {
-      return (this.agentIds.includes(agent.agentId) && agent.isTrusted === false); 
-    });
-
-    this.notTrustedAgent = notTrustedAgentFound;
-    });
-  }
-  else
-  {
-    this.notTrustedAgent = false;
-  }
-  }
-  }
   checkIfAgentHasSameAccessGroup() {
+    
     const params = { 'maxResults': this.maxResults, 'expand': 'accessGroups' };
   
     if (this.agentIds !== undefined && this.hashlistAccessGroup !== undefined) {
+      // Create an array of observables for each agentId
       const observables = this.agentIds.map(id => this.gs.get(SERV.AGENTS, id, params));
   
+      // Use forkJoin to wait for all observables to complete
       forkJoin(observables).pipe(
         switchMap((responses: any[]) => {
+         
           let allAgentsHaveSameAccessGroup = true;
-  
+
+          // Check each agent's access groups in the responses
           responses.forEach((agents, index) => {
-            console.log(`Response for agent ${this.agentIds[index]}:`, agents);
-  
+            // Check if the agent has the specified access group
             let agentHasSameAccessGroup = agents.accessGroups.some(accessGroup =>
               accessGroup.accessGroupId === this.hashlistAccessGroup.accessGroupId
             );
   
+            // If the agent doesn't have the same access group, set the flag to false and exit the loop
             if (!agentHasSameAccessGroup) {
               allAgentsHaveSameAccessGroup = false;
               return;
@@ -589,19 +601,22 @@ export class NewTasksComponent implements OnInit {
           return of(allAgentsHaveSameAccessGroup);
         })
       ).subscribe((result) => {
+        // Update the sameAccessGroup property based on the final result
         this.sameAccessGroup = result;
-        console.log('Final Result:', this.sameAccessGroup);
       });
     } else {
-      this.sameAccessGroup = true; 
+      // If agentIds or hashlistAccessGroup is undefined, set sameAccessGroup to true
+      this.sameAccessGroup = true;
     }
   }
   onSubmit(){
-    
-    if(this.needTrusted === true && this.notTrustedAgent === false && this.sameAccessGroup === true){
+    // If the task needs to be trusted and the agents are trusted
+    if(this.needTrusted === true && this.trustedAgent === true && this.sameAccessGroup === true){
     if (this.createForm.valid) {     
       this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
         const taskId = response.taskId; //Get the current task id
+          // Assign agents to the task
+          this.assignAgents(taskId); 
           Swal.fire({
             title: "Success",
             text: "New Task created!",
@@ -609,14 +624,13 @@ export class NewTasksComponent implements OnInit {
             showConfirmButton: false,
             timer: 1500
           });
-          this.assignAgents(taskId);   
         }
       );
     }
   }else if (this.needTrusted === false && this.sameAccessGroup === true){
     if (this.createForm.valid) {     
       this.gs.create(SERV.TASKS,this.createForm.value).subscribe((response) => {
-        const taskId = response.taskId; //Get the current task id
+        const taskId = response.taskId; 
           Swal.fire({
             title: "Success",
             text: "New Task created!",
@@ -624,7 +638,7 @@ export class NewTasksComponent implements OnInit {
             showConfirmButton: false,
             timer: 1500
           });
-          this.assignAgents(taskId);   
+          this.assignAgents(taskId);  
         }
       );
     }
@@ -643,14 +657,20 @@ export class NewTasksComponent implements OnInit {
           icon: "success",
           showConfirmButton: false,
           timer: 1500
+        }).then(() => {
+          this.createForm.reset();
+          this.router.navigate(['tasks/show-tasks']);
+        
         });
-        this.router.navigate(['tasks/show-tasks']);
+         
     });
   });
   }else{
     const payload = {"taskId":taskId,"agentId":this.agentIds};
     this.gs.create(SERV.AGENT_ASSIGN,payload);
+    this.createForm.reset();
     this.router.navigate(['tasks/show-tasks']);
+    
       }
   }
   // Copied from Task
